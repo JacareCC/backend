@@ -1,9 +1,11 @@
 from pathlib import Path, os
 from dotenv import load_dotenv
-from firebase_config import firebase_app
+from setup.config.firebase_config import firebase_app
 
+#env files initialization
 load_dotenv()
-firebase_app()
+#firebase initializaion
+firebase_app
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -113,7 +115,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

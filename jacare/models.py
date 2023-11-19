@@ -7,7 +7,7 @@ class Hello(models.Model):
         return self.message
 
 class Customer(models.Model):
-    firebase_uid = models.CharField(max_length=255, unique=True)
+    customer_uid = models.CharField(max_length=255, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
@@ -28,15 +28,17 @@ class CustomerReviews(models.Model):
     value_for_price_comments = models.TextField()
 
 class RestaurantUser(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    # Adicione campos adicionais conforme necessário
-
-class RestaurantsOwned(models.Model):
-    restaurant_user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE)
-    restaurant = models.ForeignKey('Restaurant', on_delete=models.CASCADE)
-
+    restaurant_user_uid = models.CharField(max_length=255, unique=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    
 class Restaurant(models.Model):
     business_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)
-    contact_person = models.CharField(max_length=100)
+    contact_person = models.CharField(max_length=200)
+
+class RestaurantsOwned(models.Model):
+    restaurant_user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
