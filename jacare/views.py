@@ -7,7 +7,9 @@ from firebase_admin import auth
 @csrf_exempt
 def authenticate_firebase_user(request):
     # Obter UID do usuário a partir do cabeçalho Authorization
+    print(request.headers.get("Authorization"))
     user_uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
+    
 
     firebase_token = auth.create_custom_token(user_uid)
     custom_token_str = firebase_token.decode('utf-8')
