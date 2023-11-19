@@ -1,1 +1,1 @@
-web: python3 -m venv ./venv
+web: python manage.py runserver
