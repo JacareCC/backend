@@ -6,7 +6,7 @@ load_dotenv()
 
 cred_path = "./setup/config/cred_firebase.json"
 
-cred = credentials.Certificate(cred_path or {"type": os.environ["SERVICE_ACCOUNT"],
+cred = credentials.Certificate({"type": os.environ["SERVICE_ACCOUNT"],
     "project_id": os.environ["PROJECT_ID"],
     "private_key_id": os.environ["PRIVATE_KEY_ID"],
     "private_key": os.environ["PRIVATE_KEY"],
