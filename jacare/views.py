@@ -6,7 +6,7 @@ from firebase_admin import auth
 
 @csrf_exempt
 def authenticate_firebase_user(request):
-    # Obter UID do usuário a partir do cabeçalho Authorization
+
     user_uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
     print(user_uid)
     
@@ -18,33 +18,14 @@ def authenticate_firebase_user(request):
         return JsonResponse({'custom_token': custom_token_str})
     else:
         return JsonResponse({'error': 'Failed to create custom token'}, status=500)
-    # try:
-    #     # verify token
-    #     print(firebase_token)
-        
-    #     decoded_token = auth.verify_id_token(firebase_token)
-    #     user_id = decoded_token['uid']
-        
-    #     # workspace
-    #     # 
 
-    #     return JsonResponse({'message': 'Custom token generated'})
-    
-    # except Exception as e:
-
-    #     return JsonResponse({'error': str(e)}, status=401)
 
 @csrf_exempt
 def create_customer_review(request):
-    # Adicione aqui a lógica para criar uma avaliação de cliente
-    # Certifique-se de que o usuário esteja autenticado antes de criar a revisão
 
-    # Exemplo simples de resposta JSON
     return JsonResponse({'message': 'Avaliação do cliente criada com sucesso!'})
 
-# Adicione mais views conforme necessário para outras operações no seu banco de dados
 
-# Exemplo de uma view que lista todos os clientes
 @csrf_exempt
 def list_customers(request):
     customers = Customer.objects.all()

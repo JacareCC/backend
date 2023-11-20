@@ -1,11 +1,5 @@
 from django.db import models
 
-class Hello(models.Model):
-    message = models.CharField(max_length=30)
-
-    def __str__(self) -> str:
-        return self.message
-
 class Customer(models.Model):
     customer_uid = models.CharField(max_length=255, unique=True)
     first_name = models.CharField(max_length=100)
