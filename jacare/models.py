@@ -2,31 +2,31 @@ from django.db import models
 from django.utils import timezone
 
 class Customer(models.Model):
-    customer_uid = models.CharField(max_length=255, unique=True)
-    user_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    birthday = models.DateField()
+    customer_uid = models.CharField(max_length=255, unique=True, blank=False)
+    user_name = models.CharField(max_length=100, null=True)
+    email = models.EmailField(unique=True, null=True)
+    birthday = models.DateField(null=True)
 
 class Restaurant(models.Model):
-    place_id = models.TextField()
-    business_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=15)
-    contact_person = models.CharField(max_length=200)
+    place_id = models.TextField(blank=False, null=False)
+    business_name = models.CharField(max_length=100, null=True)
+    email = models.EmailField(unique=True, null=True)
+    phone_number = models.CharField(max_length=15, null=True)
+    contact_person = models.CharField(max_length=200, null=True)
 
 class CustomerReviews(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     customer_service_points = models.IntegerField()
-    customer_service_comments = models.TextField()
+    customer_service_comments = models.TextField(null=True)
     atmosphere_points = models.IntegerField()
-    atmosphere_comments = models.TextField()
+    atmosphere_comments = models.TextField(null=True)
     accessibility_points = models.IntegerField()
-    accessibility_comments = models.TextField()
+    accessibility_comments = models.TextField(null=True)
     food_quality_points = models.IntegerField()
-    food_quality_comments = models.TextField()
+    food_quality_comments = models.TextField(null=True)
     value_for_price_points = models.IntegerField()
-    value_for_price_comments = models.TextField()
+    value_for_price_comments = models.TextField(null=True)
 
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
