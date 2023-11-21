@@ -1,21 +1,22 @@
 from django.db import models
-
-class Hello(models.Model):
-    message = models.CharField(max_length=30)
-
-    def __str__(self) -> str:
-        return self.message
+from django.utils import timezone
 
 class Customer(models.Model):
     customer_uid = models.CharField(max_length=255, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    user_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     birthday = models.DateField()
 
+class Restaurant(models.Model):
+    place_id = models.TextField()
+    business_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15)
+    contact_person = models.CharField(max_length=200)
+
 class CustomerReviews(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    restaurant_id = models.IntegerField()
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     customer_service_points = models.IntegerField()
     customer_service_comments = models.TextField()
     atmosphere_points = models.IntegerField()
@@ -27,18 +28,23 @@ class CustomerReviews(models.Model):
     value_for_price_points = models.IntegerField()
     value_for_price_comments = models.TextField()
 
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    def save(self, *args, **kwargs):
+        #only when create a new review 
+        if not self.id:
+            self.created_at = timezone.now()
+        return super().save(*args, **kwargs)
+
 class RestaurantUser(models.Model):
-    restaurant_user_uid = models.CharField(max_length=255, unique=True)
+    restaurant_user = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    restaurant_name = models.CharField()
+    # restaurant_place_id = models.CharField()
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    
-class Restaurant(models.Model):
-    business_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)
     contact_person = models.CharField(max_length=200)
-
+    
 class RestaurantsOwned(models.Model):
     restaurant_user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE)
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
