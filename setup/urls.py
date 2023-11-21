@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.urls import path
-from jacare.views import authenticate_firebase_user
+from jacare.views import login_user
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/', authenticate_firebase_user),
+    path('auth/', login_user),
 ]

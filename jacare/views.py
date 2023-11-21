@@ -1,38 +1,31 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Customer, CustomerReviews, RestaurantUser, RestaurantsOwned, Restaurant
+from .models import Customer
 from firebase_admin import auth
 
 
 @csrf_exempt
-def authenticate_firebase_user(request):
+def login_user(request):
     # Obter UID do usuário a partir do cabeçalho Authorization
-    user_uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
-    print(user_uid)
+    uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
+    print(user)
     
 
-    firebase_token = auth.create_custom_token(user_uid)
-    custom_token_str = firebase_token.decode('utf-8')
-
-    if firebase_token:
-        return JsonResponse({'custom_token': custom_token_str})
-    else:
-        return JsonResponse({'error': 'Failed to create custom token'}, status=500)
-    # try:
-    #     # verify token
-    #     print(firebase_token)
-        
-    #     decoded_token = auth.verify_id_token(firebase_token)
-    #     user_id = decoded_token['uid']
-        
-    #     # workspace
-    #     # 
-
-    #     return JsonResponse({'message': 'Custom token generated'})
+    user = Customer.objects.filter(customer_uid=uid).exists()
     
-    # except Exception as e:
+    if user:
+        return JsonResponse({'success': 'Logged in'}, status=200)
+    else: 
+        return JsonResponse({'Error': 'Please register before loggin in'}, status=401)
 
-    #     return JsonResponse({'error': str(e)}, status=401)
+
+# @csrf_exempt
+# def register_user(request):
+#     uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
+    
+    
+
+
 
 @csrf_exempt
 def create_customer_review(request):
