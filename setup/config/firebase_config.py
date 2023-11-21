@@ -4,9 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-cred_path = "./setup/config/cred_firebase.json"
-
-cred = credentials.Certificate({"type": os.environ.get("SERVICE_ACCOUNT"),
+if os.environ.get("ENV"):
+    cred_path = {"type": os.environ.get("SERVICE_ACCOUNT"),
     "project_id": os.environ.get("PROJECT_ID"),
     "private_key_id": os.environ.get("PRIVATE_KEY_ID"),
     "private_key": os.environ.get("PRIVATE_KEY").replace('\\n', '\n'),
@@ -17,5 +16,11 @@ cred = credentials.Certificate({"type": os.environ.get("SERVICE_ACCOUNT"),
     "auth_provider_x509_cert_url": os.environ.get("AUTH_PROVIDER_URL"),
     "client_x509_cert_url": os.environ.get("CLIENT_URL"),
     "universe_domain": os.environ.get("UNIVERSE_DOMAIN")
-})
+}
+else:
+    cred_path = "./setup/config/cred_firebase.json"
+    
+
+cred = credentials.Certificate(cred_path)
 firebase_app = initialize_app(cred)
+
