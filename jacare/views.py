@@ -7,16 +7,14 @@ from firebase_admin import auth
 
 @csrf_exempt
 def login_user(request):
-    uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
-    print(user)
-    
+    uid = request.headers.get("Authorization", '').split('Bearer ')[-1]  
 
     user = Customer.objects.filter(customer_uid=uid).exists()
     
     if user:
         return JsonResponse({'success': 'Logged in'}, status=200)
     else: 
-        return JsonResponse({'Error': 'Please register before loggin in'}, status=401)
+        return JsonResponse({'Error': 'Please register before logging in'}, status=401)
 
 @api_view(['POST'])
 @csrf_exempt
