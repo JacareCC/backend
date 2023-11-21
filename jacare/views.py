@@ -3,13 +3,16 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from .models import Customer
 from firebase_admin import auth
+import json
 
 
 @csrf_exempt
 def login_user(request):
-    uid = request.headers.get("Authorization", '').split('Bearer ')[-1]  
+    uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
+    print(uid)  
 
     user = Customer.objects.filter(customer_uid=uid).exists()
+    print(user)
     
     if user:
         return JsonResponse({'success': 'Logged in'}, status=200)
@@ -19,7 +22,11 @@ def login_user(request):
 @api_view(['POST'])
 @csrf_exempt
 def register_user(request):
-    uid = request.headers.get("Authorization", '').split('Bearer ')[-1]
+    body_unicode = request.body.decode('utf-8')
+    body = json.loads(body_unicode)
+    uid = body['uid']
+    print(uid)
+    
     
     user_exists = Customer.objects.filter(customer_uid=uid).exists()
 
