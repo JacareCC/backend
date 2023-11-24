@@ -68,7 +68,7 @@ def register_user(request):
 def query_restaraurant(request):
 
     body = request.data
-    cuisine_type = body.get("cuisineType", None)
+    cuisine_options = body.get("cuisineOptions", None)
     location = body.get("location", None)
     price = body.get("price", None)
     distance = body.get("distanceToTravel", None)
@@ -86,7 +86,7 @@ def query_restaraurant(request):
     }
 
     data = {
-        "includedTypes": [cuisine_type],
+        "includedTypes": cuisine_options,
         "maxResultCount": max_result_count,
         "locationRestriction": location_restriction,
     }
