@@ -6,8 +6,23 @@ from firebase_admin import auth
 import json
 import requests
 import os 
-
 api_key = os.environ.get("API_KEY")
+
+def filter_by_price(places, userPrice):
+    google_price_level = {
+        "PRICE_LEVEL_FREE": 0,
+        "PRICE_LEVEL_INEXPENSIVE": 1,
+        "PRICE_LEVEL_MODERATE": 2,
+        "PRICE_LEVEL_EXPENSIVE": 3,
+        "PRICE_LEVEL_VERY_EXPENSIVE": 4,
+    }
+
+    filtered_places = [
+        place for place in places
+        if google_price_level.get(place.get('priceLevel'), 0) <= userPrice
+    ]
+
+    return filtered_places
 
 @csrf_exempt
 def login_user(request):
@@ -45,14 +60,14 @@ def register_user(request):
 def query_restaraurant(request):
 
     body = request.data
-    cuisineType = body.get('cuisineType', None)
+    cuisine_type = body.get('cuisineType', None)
     location = body.get('location', None)
     price = body.get('price', None)
     distance = body.get('distanceToTravel', None)
-    maxResultCount = body.get('amountOfOptions', None)
+    max_result_count = body.get('amountOfOptions', None)
     openNow = body.get('openNow', None)
 
-    locationRestriction = { 
+    location_restriction = { 
             "circle": {
                 "center": {
                     "latitude": location["latitude"],
@@ -63,23 +78,22 @@ def query_restaraurant(request):
     }
 
     data = {
-        "includedTypes": [cuisineType],
-        "maxResultCount": maxResultCount,
-        "locationRestriction": locationRestriction,
+        "includedTypes": [cuisine_type],
+        "maxResultCount": max_result_count,
+        "locationRestriction": location_restriction,
     }
 
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask":"places.displayName"
+        "X-Goog-FieldMask":"places.displayName,places.priceLevel"
     }
 
     response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=data, headers=headers)
 
-    print(response.json())
     if response.status_code == 200:
         data = response.json()
-        return JsonResponse({"result": data["places"]}, status=200)
+        filtered_results = filter_by_price(data.get('places', []), price)
+        return JsonResponse({"result": filtered_results}, status=200)
     else:
         return JsonResponse({'error': 'Failed to fetch data from Google Places API'}, status=response.status_code)
-    # return JsonResponse({"success": params}, status=200)
