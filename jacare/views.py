@@ -93,7 +93,7 @@ def query_restaraurant(request):
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask":"places.location,places.displayName,places.priceLevel,places.currentOpeningHours"
+        "X-Goog-FieldMask":"places.location,places.displayName,places.priceLevel,places.currentOpeningHours,places.id"
     }
 
     response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=data, headers=headers)
