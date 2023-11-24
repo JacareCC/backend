@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Customer, CustomerReviews, RestaurantUser, RestaurantsOwned, Restaurant
+from .models import User, CustomerReviews, Restaurant, Tier, TierReward, Points, visited_history
 from firebase_admin import auth
 
 
@@ -47,6 +47,6 @@ def create_customer_review(request):
 # Exemplo de uma view que lista todos os clientes
 @csrf_exempt
 def list_customers(request):
-    customers = Customer.objects.all()
+    customers = User.objects.all()
     customer_list = [{'customer_uid': customer.customer_uid, 'first_name': customer.first_name, 'last_name': customer.last_name} for customer in customers]
     return JsonResponse({'customers': customer_list})
