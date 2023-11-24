@@ -64,6 +64,7 @@ def register_user(request):
         return JsonResponse({"success": "User registered successfully"}, status=201)
     
 @api_view(['POST'])
+@csrf_exempt
 def query_restaraurant(request):
 
     body = request.data
