@@ -1,5 +1,7 @@
 from django.db import models
 
+from django.utils import timezone
+
 class Customer(models.Model):
     customer_uid = models.CharField(max_length=255, unique=True)
     first_name = models.CharField(max_length=100)
