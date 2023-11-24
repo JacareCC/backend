@@ -1,40 +1,53 @@
 from django.db import models
-
 from django.utils import timezone
 
-class Customer(models.Model):
-    customer_uid = models.CharField(max_length=255, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    birthday = models.DateField()
+class User(models.Model):
+    user_uid = models.CharField(max_length=255, unique=True, blank=False)
+    user_name = models.CharField(max_length=100, null=True)
+    birthday = models.DateField(null=True)
+    level = models.IntegerField(null=True)
+    date_joined = models.DateField(auto_now_add=True)
+
+class Restaurant(models.Model):
+    place_id = models.TextField(blank=False, null=False)
+    business_name = models.CharField(max_length=100, null=True)
+    email = models.EmailField(unique=True, null=True)
+    phone_number = models.CharField(max_length=15, null=True)
+    contact_person = models.CharField(max_length=200, null=True)
+    retaurant_level = models.IntegerField(null=True)
+    claimed = models.BooleanField()
+    owner_user_id = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
 class CustomerReviews(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    restaurant_id = models.IntegerField()
-    customer_service_points = models.IntegerField()
-    customer_service_comments = models.TextField()
-    atmosphere_points = models.IntegerField()
-    atmosphere_comments = models.TextField()
-    accessibility_points = models.IntegerField()
-    accessibility_comments = models.TextField()
-    food_quality_points = models.IntegerField()
-    food_quality_comments = models.TextField()
-    value_for_price_points = models.IntegerField()
-    value_for_price_comments = models.TextField()
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    data = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-class RestaurantUser(models.Model):
-    restaurant_user_uid = models.CharField(max_length=255, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    
-class Restaurant(models.Model):
-    business_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=15)
-    contact_person = models.CharField(max_length=200)
+class Tier(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    level = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField(null=True)
 
-class RestaurantsOwned(models.Model):
-    restaurant_user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE)
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+class TierReward(models.Model):
+    restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    reward_level = models.IntegerField()
+    reward_description = models.TextField()
+    refresh = models.IntegerField()
+    verified_reviwes = models.IntegerField()
+
+class Points(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    value = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField(null=True)
+
+class visited_history(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    date_visited = models.DateTimeField(auto_now_add=True)
+    saved = models.BooleanField(default=False)

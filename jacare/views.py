@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import Customer
+from .models import User
 from firebase_admin import auth
 import json
 import requests
@@ -36,7 +36,7 @@ def login_user(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
     print(uid)  
 
-    user = Customer.objects.filter(customer_uid=uid).exists()
+    user = User.objects.filter(user_uid=uid).exists()
     print(user)
     
     if user:
@@ -53,12 +53,12 @@ def register_user(request):
     print(uid)
     
     
-    user_exists = Customer.objects.filter(customer_uid=uid).exists()
+    user_exists = User.objects.filter(user_id=uid).exists()
 
     if user_exists:
         return JsonResponse({"error": "User already registered"}, status=400)
     else:
-        new_user = Customer(customer_uid=uid)
+        new_user = User(user_id=uid)
         new_user.save()
 
         return JsonResponse({"success": "User registered successfully"}, status=201)
