@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User
+from .models import User, Restaurant
 from firebase_admin import auth
 import json
 import requests
@@ -102,6 +102,14 @@ def query_restaraurant(request):
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
+        for restaurant in filtered_results:
+            place_id = restaurant.get("id")
+            existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
+            if existing_restaurant:
+                continue
+            else:
+                new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+                new_restaurant.save()
         return JsonResponse({"result": filtered_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
