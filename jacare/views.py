@@ -1,7 +1,8 @@
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant
+from .models import User, Restaurant, visited_history
 from firebase_admin import auth
 import json
 import requests
@@ -130,3 +131,29 @@ def restaurant_detail(request):
         return JsonResponse({"success": data}, status=200)
     else:
         return JsonResponse({"error": "no restaraunt found"}, status=500)
+
+#Endpoint to retrieve visited history 
+@csrf_exempt
+def user_history(request):
+    id = request.GET.get('id')
+    data = visited_history.objects.filter(user_id=id).all()
+    if data:
+        return JsonResponse({"success": data}, status=200)
+    else:
+        return JsonResponse({"error": "no history found "}, status=500)
+
+#Endpoint to add to visited history
+@api_view(['POST'])
+@csrf_exempt
+def add_to_user_history(request):  
+    body = request.data
+    restaurant_id = body.get('restaurant_id', None)
+    user_id = body.get('user_id', None)
+    saved = body.get('saved', False)
+    current_date = timezone.now()
+
+
+    new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, saved=saved, date_visited=current_date)
+    new_history.save()
+
+    return JsonResponse({"sucess": "added new history"}, status=200)
