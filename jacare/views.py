@@ -8,6 +8,7 @@ import requests
 import os 
 api_key = os.environ.get("API_KEY")
 
+#This is a helper function to filter returned restaraunts from google
 def filter_data(places, user_price, open_now=False):
     google_price_level = {
         "PRICE_LEVEL_FREE": 0,
@@ -31,28 +32,27 @@ def filter_data(places, user_price, open_now=False):
 
     return result
 
+
+#Endpoint for logging users in
 @csrf_exempt
 def login_user(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
-    print(uid)  
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
 
     user = User.objects.filter(user_uid=uid).exists()
-    print(user)
     
     if user:
         return JsonResponse({"success": "Logged in"}, status=200)
     else: 
         return JsonResponse({"Error": "Please register before logging in"}, status=401)
 
+#Endpoint for registering users 
 @api_view(['POST'])
 @csrf_exempt
 def register_user(request):
     body_unicode = request.body.decode('utf-8')
     body = json.loads(body_unicode)
     uid = body["uid"]
-    print(uid)
-    
-    
+
     user_exists = User.objects.filter(user_id=uid).exists()
 
     if user_exists:
@@ -63,6 +63,7 @@ def register_user(request):
 
         return JsonResponse({"success": "User registered successfully"}, status=201)
     
+#Endpoint to query restaraunts from google 
 @api_view(['POST'])
 @csrf_exempt
 def query_restaraurant(request):
@@ -113,3 +114,19 @@ def query_restaraurant(request):
         return JsonResponse({"result": filtered_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
+
+
+#Endpoint to retrieve specific restaraunt detail from db 
+@csrf_exempt
+def restaurant_detail(request): 
+    id = request.GET.get('id')
+    restaurant = Restaurant.objects.filter(id=id).first()
+    data = {
+        "id": restaurant.id,
+        "place_id": restaurant.place_id,
+        "name": restaurant.business_name,
+    }
+    if restaurant:
+        return JsonResponse({"success": data}, status=200)
+    else:
+        return JsonResponse({"error": "no restaraunt found"}, status=500)
