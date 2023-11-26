@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
@@ -156,4 +156,4 @@ def add_to_user_history(request):
     new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, saved=saved, date_visited=current_date)
     new_history.save()
 
-    return JsonResponse({"sucess": "added new history"}, status=200)
+    return HttpResponse("success", status=200)
