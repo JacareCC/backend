@@ -131,7 +131,6 @@ def query_restaraurant(request):
 
     data = {
         "includedTypes": cuisine_options,
-        # "maxResultCount": max_result_count,
         "locationRestriction": location_restriction,
     }
 
@@ -231,3 +230,16 @@ def get_user_saved_restaurants(request):
         return JsonResponse({"Error": "No saved restaurants"})
     
 
+#Endpoint for adding or removing to user favorites
+@api_view(["PATCH"])
+@csrf_exempt
+def change_user_saved_restaurants(request):
+    body = request.data
+    uid = body.get("uid", None)
+    restaurant_id = body.get("restaurant_id", None)
+    if uid and restaurant_id:
+        data = visited_history.objects.filter(user_id=uid, restaurant_id=restaurant_id)
+        data.saved = not data.saved 
+        return HttpResponse("success", status=200)
+    else:
+        return HttpResponse("could not find user or restaurant", status=404)
