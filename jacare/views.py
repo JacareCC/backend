@@ -195,14 +195,28 @@ def add_to_user_history(request):
     if user: 
         new_history = visited_history(restaurant_id=restaurant, user_id=user)
         new_history.save()
-        return HttpResponse("success", status=200)
+        return HttpResponse("success", status=201)
     else: 
         return JsonResponse({"error": "failed to save history"}, status=500)
 
 
-# @api_view(["POST"])
-# @csrf_exempt
-# def new_review(request):
-#     body = request.data
+@api_view(["POST"])
+@csrf_exempt
+def new_review(request):
+    body = request.data
+    restaurant_id = body.get('restaurant_place_id', None)
+    user_uid = body.get('user_uid', None)
+    
+
+    user = User.objects.filter(user_uid=user_uid).first()
+    restaurant = Restaurant.objects.filter(id=restaurant_id).first()
+
+    if restaurant and user:
+        new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
+        new_review_made.save()
+        return HttpResponse("success", status=201)
+    else: 
+        return JsonResponse({"error": "failed to save history"}, status=500)
+
     
     
