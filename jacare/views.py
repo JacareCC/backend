@@ -139,14 +139,14 @@ def restaurant_detail(request, id):
 @csrf_exempt
 def user_history(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-    print(uid)
     user = User.objects.filter(user_uid=uid).first()
     data = visited_history.objects.filter(user_id=user).all()
-    if data:
-        return JsonResponse({"success": data}, status=200)
+    history = list(data.values())
+    if history:
+        return JsonResponse({"success": history}, status=200)
     else:
         return JsonResponse({"error": "no history found "}, status=500)
-
+    
 #Endpoint to add to visited history
 @api_view(['POST'])
 @csrf_exempt
