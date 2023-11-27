@@ -155,13 +155,12 @@ def add_to_user_history(request):
     body = request.data
     restaurant_id = body.get('restaurant_id', None)
     user_uid = body.get('uid', None)
-    saved = body.get('saved', False)
     current_date = timezone.now()
 
     user = User.objects.filter(uid=user_uid).first()
     if user: 
         user_id = user.get("id", None)
-        new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, saved=saved, date_visited=current_date)
+        new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, date_visited=current_date)
         new_history.save()
         return HttpResponse("success", status=200)
     else: 
