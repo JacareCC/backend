@@ -145,7 +145,7 @@ def query_restaraurant(request):
         for index in index_of_weights:
             results_for_fe.append(filtered_results[index])
         
-        print(results_for_fe)
+    
         return JsonResponse({"result": results_for_fe}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
