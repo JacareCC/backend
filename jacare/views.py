@@ -54,12 +54,12 @@ def register_user(request):
     body = json.loads(body_unicode)
     uid = body["uid"]
 
-    user_exists = User.objects.filter(user_id=uid).exists()
+    user_exists = User.objects.filter(user_uid=uid).exists()
 
     if user_exists:
         return JsonResponse({"error": "User already registered"}, status=400)
     else:
-        new_user = User(user_id=uid)
+        new_user = User(user_uid=uid)
         new_user.save()
 
         return JsonResponse({"success": "User registered successfully"}, status=201)
@@ -157,6 +157,7 @@ def add_to_user_history(request):
     current_date = timezone.now()
 
     user = User.objects.filter(user_uid=user_uid).first()
+    print(user)
     if user: 
         user_id = user.get("id", None)
         new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, date_visited=current_date)
