@@ -235,12 +235,22 @@ def get_user_saved_restaurants(request):
 @api_view(["PATCH"])
 @csrf_exempt
 def change_user_saved_restaurants(request):
-    body = request.data
-    uid = body.get("uid", None)
-    restaurant_id = body.get("restaurant_id", None)
-    if uid and restaurant_id:
-        data = visited_history.objects.filter(user_id=uid, restaurant_id=restaurant_id)
-        data.saved = not data.saved 
+    if request.method == 'PATCH':
+        body = request.data
+        print(body)
+        uid = body.get("uid", None)
+        user = User.objects.filter(user_uid=uid).exists()
+        restaurant_id = body.get("restaurantId", None)
+        print(restaurant_id)
+        if user and restaurant_id:
+            data = visited_history.objects.filter(user_id=user, restaurant_id=restaurant_id)
+            if data:
+                data_to_update = data.first()
+                print(data_to_update.saved)
+                data_to_update.saved = not data_to_update.saved
+                print(data_to_update.saved)
+                data_to_update.save()
+               
         return HttpResponse("success", status=200)
     else:
         return HttpResponse("could not find user or restaurant", status=404)
