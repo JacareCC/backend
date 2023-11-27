@@ -138,10 +138,10 @@ def restaurant_detail(request, id):
 #Endpoint to retrieve visited history 
 @csrf_exempt
 def user_history(request):
-    id = request.GET.get('uid')
-    user = User.objects.filter(user_uid=id).first()
-    user_id = user.get("id", None)
-    data = visited_history.objects.filter(user_id=user_id).all()
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    print(uid)
+    user = User.objects.filter(user_uid=uid).first()
+    data = visited_history.objects.filter(user_id=user).all()
     if data:
         return JsonResponse({"success": data}, status=200)
     else:
