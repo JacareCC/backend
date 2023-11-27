@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, visited_history
+from .models import User, Restaurant, visited_history, CustomerReviews
 from firebase_admin import auth
 import json
 import requests
@@ -108,10 +108,12 @@ def query_restaraurant(request):
             place_id = restaurant.get("id")
             existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
             if existing_restaurant:
+                restaurant["id"] = existing_restaurant.id
                 continue
             else:
                 new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
                 new_restaurant.save()
+                restaurant["id"] = new_restaurant.id
         return JsonResponse({"result": filtered_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
@@ -122,7 +124,9 @@ def query_restaraurant(request):
 def restaurant_detail(request): 
     id = request.GET.get('id')
     restaurant = Restaurant.objects.filter(id=id).first()
+    reviews = list(CustomerReviews.objects.filter(resaurant_id=id).all())
     data = {
+        "reviews": reviews,
         "id": restaurant.id,
         "place_id": restaurant.place_id,
         "name": restaurant.business_name,
@@ -135,8 +139,10 @@ def restaurant_detail(request):
 #Endpoint to retrieve visited history 
 @csrf_exempt
 def user_history(request):
-    id = request.GET.get('id')
-    data = visited_history.objects.filter(user_id=id).all()
+    id = request.GET.get('uid')
+    user = User.objects.filter(uid=id).first()
+    user_id = user.get("id", None)
+    data = visited_history.objects.filter(user_id=user_id).all()
     if data:
         return JsonResponse({"success": data}, status=200)
     else:
@@ -148,12 +154,15 @@ def user_history(request):
 def add_to_user_history(request):  
     body = request.data
     restaurant_id = body.get('restaurant_id', None)
-    user_id = body.get('user_id', None)
+    user_uid = body.get('uid', None)
     saved = body.get('saved', False)
     current_date = timezone.now()
 
-
-    new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, saved=saved, date_visited=current_date)
-    new_history.save()
-
-    return HttpResponse("success", status=200)
+    user = User.objects.filter(uid=user_uid).first()
+    if user: 
+        user_id = user.get("id", None)
+        new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, saved=saved, date_visited=current_date)
+        new_history.save()
+        return HttpResponse("success", status=200)
+    else: 
+        return JsonResponse({"error": "failed to save history"}, status=500)
