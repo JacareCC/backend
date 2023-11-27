@@ -222,12 +222,13 @@ def new_review(request):
 @csrf_exempt
 def get_user_saved_restaurants(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-    data = visited_history.objects.filter(user_id=uid, saved=True).all()
+    user = User.objects.filter(user_uid=uid).exists()
+    data = visited_history.objects.filter(user_id=user, saved=True).all()
     saved_restaurants = list(data.values())
     if saved_restaurants:
-        return JsonResponse({"success": saved_restaurants})
+        return JsonResponse({"message": saved_restaurants})
     else:
-        return JsonResponse({"Error": "No saved restaurants"})
+        return JsonResponse({"message": "No saved restaurants"})
     
 
 #Endpoint for adding or removing to user favorites

@@ -11,7 +11,7 @@ urlpatterns = [
     path('user/history/', user_history),
     path('user/history/add/', add_to_user_history),
     path('submitreview/', new_review),
-    path('user/saved', get_user_saved_restaurants),
-    path('user/saved/add', change_user_saved_restaurants),
-    path('user/saved/remove', change_user_saved_restaurants)
+    path('user/favorites/', get_user_saved_restaurants),
+    path('user/favorites/add/', change_user_saved_restaurants),
+    path('user/favorites/remove/', change_user_saved_restaurants)
 ]
