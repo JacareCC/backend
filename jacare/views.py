@@ -8,7 +8,7 @@ import json
 import requests
 import os 
 import random
-import numpy as np
+
 api_key = os.environ.get("API_KEY")
 
 #This is a helper function to filter returned restaraunts from google
@@ -199,7 +199,7 @@ def add_to_user_history(request):
     else: 
         return JsonResponse({"error": "failed to save history"}, status=500)
 
-
+#Endpoint for creating new review
 @api_view(["POST"])
 @csrf_exempt
 def new_review(request):
@@ -219,4 +219,15 @@ def new_review(request):
         return JsonResponse({"error": "failed to save history"}, status=500)
 
     
+#Endpoint for getting user favorites
+@csrf_exempt
+def get_user_saved_restaurants(request):
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    data = visited_history.objects.filter(user_id=uid, saved=True).all()
+    saved_restaurants = list(data.values())
+    if saved_restaurants:
+        return JsonResponse({"success": saved_restaurants})
+    else:
+        return JsonResponse({"Error": "No saved restaurants"})
     
+
