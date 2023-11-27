@@ -140,7 +140,7 @@ def restaurant_detail(request):
 @csrf_exempt
 def user_history(request):
     id = request.GET.get('uid')
-    user = User.objects.filter(uid=id).first()
+    user = User.objects.filter(user_uid=id).first()
     user_id = user.get("id", None)
     data = visited_history.objects.filter(user_id=user_id).all()
     if data:
@@ -157,7 +157,7 @@ def add_to_user_history(request):
     user_uid = body.get('uid', None)
     current_date = timezone.now()
 
-    user = User.objects.filter(uid=user_uid).first()
+    user = User.objects.filter(user_uid=user_uid).first()
     if user: 
         user_id = user.get("id", None)
         new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, date_visited=current_date)
