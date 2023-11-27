@@ -157,10 +157,10 @@ def add_to_user_history(request):
     current_date = timezone.now()
 
     user = User.objects.filter(user_uid=user_uid).first()
-    print(user)
+    restaurant = Restaurant.objects.filter(id=restaurant_id).first()
+    
     if user: 
-        user_id = user.get("id", None)
-        new_history = visited_history(restaurant_id=restaurant_id, user_id=user_id, date_visited=current_date)
+        new_history = visited_history(restaurant_id=restaurant, user_id=user, date_visited=current_date)
         new_history.save()
         return HttpResponse("success", status=200)
     else: 
