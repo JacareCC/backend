@@ -35,6 +35,46 @@ def filter_data(places, user_price, open_now=False):
 
     return result
 
+def weight_data(restaurant_list, max_result_count):
+    weight_array = []
+    random_array_with_weight = []
+    results_for_fe = []
+
+    for restaurant in restaurant_list:
+        weight = 0
+        place_id = restaurant.get("id")
+        existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
+        review_count = len(CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all())
+        if existing_restaurant:
+            restaurant["id"] = existing_restaurant.id
+            continue
+        else:
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+            new_restaurant.save()
+            restaurant["id"] = new_restaurant.id
+        if review_count <= 25:
+            weight += .4
+        if review_count <= 50 and review_count > 25:
+            weight += .3
+        if review_count <= 75 and review_count > 50:
+            weight += .2
+        if review_count > 75:
+            weight += .1
+        if existing_restaurant and existing_restaurant.claimed is True:
+            weight += .3
+        if existing_restaurant and existing_restaurant.retaurant_level:
+            weight += existing_restaurant.retaurant_level * .1
+        weight_array.append(weight)
+
+    for weight in weight_array:
+        new_weight = weight * random.randint(1,100)
+        random_array_with_weight.append(new_weight)
+      
+    index_of_weights = sorted(range(len(random_array_with_weight)), key=lambda i: random_array_with_weight[i], reverse=True)[:max_result_count]
+      
+    for index in index_of_weights:
+        results_for_fe.append(restaurant_list[index])
+    return results_for_fe
 
 #Endpoint for logging users in
 @csrf_exempt
@@ -103,50 +143,12 @@ def query_restaraurant(request):
 
     response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=data, headers=headers)
 
-    weight_array = []
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
-        for restaurant in filtered_results:
-            weight = 0
-            place_id = restaurant.get("id")
-            existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
-            review_count = len(CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all())
-            if review_count <= 25:
-                weight += .4
-            if review_count <= 50 and review_count > 25:
-                weight += .3
-            if review_count <= 75 and review_count > 50:
-                weight += .2
-            if review_count > 75:
-                weight += .1
-            if existing_restaurant and existing_restaurant.claimed is True:
-                weight += .3
-            if existing_restaurant and existing_restaurant.retaurant_level:
-                weight += existing_restaurant.retaurant_level * .1
-            weight_array.append(weight)
-
-            if existing_restaurant:
-                restaurant["id"] = existing_restaurant.id
-                continue
-            else:
-                new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
-                new_restaurant.save()
-                restaurant["id"] = new_restaurant.id
-        random_array_with_weight = []
-        for weight in weight_array:
-            new_weight = weight * random.randint(1,100)
-            random_array_with_weight.append(new_weight)
-      
-        index_of_weights = sorted(range(len(random_array_with_weight)), key=lambda i: random_array_with_weight[i], reverse=True)[:max_result_count]
-      
-
-        results_for_fe = []
-        for index in index_of_weights:
-            results_for_fe.append(filtered_results[index])
-        
-    
-        return JsonResponse({"result": results_for_fe}, status=200)
+        weighted_results = weight_data(filtered_results, max_result_count)
+  
+        return JsonResponse({"result": weighted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
 
