@@ -121,13 +121,13 @@ def query_restaraurant(request):
 
 #Endpoint to retrieve specific restaraunt detail from db 
 @csrf_exempt
-def restaurant_detail(request): 
-    id = request.GET.get('id')
+def restaurant_detail(request, id): 
+    print(id)
     restaurant = Restaurant.objects.filter(id=id).first()
-    reviews = list(CustomerReviews.objects.filter(resaurant_id=id).all())
+    reviews = list(CustomerReviews.objects.filter(restaurant_id=id).all())
     data = {
         "reviews": reviews,
-        "id": restaurant.id,
+        "id": id,
         "place_id": restaurant.place_id,
         "name": restaurant.business_name,
     }

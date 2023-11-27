@@ -9,5 +9,5 @@ urlpatterns = [
     path('search/', query_restaraurant),
     path('restaurant/<int:id>/', restaurant_detail),
     path('user/history/', user_history),
-    path('user/history/', add_to_user_history),
+    path('user/history/add/', add_to_user_history),
 ]
