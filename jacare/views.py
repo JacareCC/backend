@@ -8,7 +8,7 @@ import json
 import requests
 import os 
 import random
-import numpy as np
+
 api_key = os.environ.get("API_KEY")
 
 #This is a helper function to filter returned restaraunts from google
@@ -131,7 +131,6 @@ def query_restaraurant(request):
 
     data = {
         "includedTypes": cuisine_options,
-        # "maxResultCount": max_result_count,
         "locationRestriction": location_restriction,
     }
 
@@ -199,7 +198,7 @@ def add_to_user_history(request):
     else: 
         return JsonResponse({"error": "failed to save history"}, status=500)
 
-
+#Endpoint for creating new review
 @api_view(["POST"])
 @csrf_exempt
 def new_review(request):
@@ -219,4 +218,39 @@ def new_review(request):
         return JsonResponse({"error": "failed to save history"}, status=500)
 
     
+#Endpoint for getting user favorites
+@csrf_exempt
+def get_user_saved_restaurants(request):
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    user = User.objects.filter(user_uid=uid).exists()
+    data = visited_history.objects.filter(user_id=user, saved=True).all()
+    saved_restaurants = list(data.values())
+    if saved_restaurants:
+        return JsonResponse({"message": saved_restaurants})
+    else:
+        return JsonResponse({"message": "No saved restaurants"})
     
+
+#Endpoint for adding or removing to user favorites
+@api_view(["PATCH"])
+@csrf_exempt
+def change_user_saved_restaurants(request):
+    if request.method == 'PATCH':
+        body = request.data
+        print(body)
+        uid = body.get("uid", None)
+        user = User.objects.filter(user_uid=uid).exists()
+        restaurant_id = body.get("restaurantId", None)
+        print(restaurant_id)
+        if user and restaurant_id:
+            data = visited_history.objects.filter(user_id=user, restaurant_id=restaurant_id)
+            if data:
+                data_to_update = data.first()
+                print(data_to_update.saved)
+                data_to_update.saved = not data_to_update.saved
+                print(data_to_update.saved)
+                data_to_update.save()
+               
+        return HttpResponse("success", status=200)
+    else:
+        return HttpResponse("could not find user or restaurant", status=404)
