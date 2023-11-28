@@ -46,13 +46,6 @@ def weight_data(restaurant_list, max_result_count):
         place_id = restaurant.get("id")
         existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
         review_count = len(CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all())
-        if existing_restaurant:
-            restaurant["id"] = existing_restaurant.id
-            continue
-        else:
-            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
-            new_restaurant.save()
-            restaurant["id"] = new_restaurant.id
         if review_count <= 25:
             weight += .4
         if review_count <= 50 and review_count > 25:
@@ -66,6 +59,14 @@ def weight_data(restaurant_list, max_result_count):
         if existing_restaurant and existing_restaurant.retaurant_level:
             weight += existing_restaurant.retaurant_level * .1
         weight_array.append(weight)
+
+        if existing_restaurant:
+            restaurant["id"] = existing_restaurant.id
+            continue
+        else:
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+            new_restaurant.save()
+            restaurant["id"] = new_restaurant.id
 
     for weight in weight_array:
         new_weight = weight * random.randint(1,100)
@@ -146,7 +147,9 @@ def query_restaraurant(request):
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
+        print(filtered_results)
         weighted_results = weight_data(filtered_results, max_result_count)
+        print(weighted_results)
   
         return JsonResponse({"result": weighted_results}, status=200)
     else:
