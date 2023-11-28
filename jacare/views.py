@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, visited_history, CustomerReviews
+from .models import User, Restaurant, visited_history, CustomerReviews, claim_requests
 from firebase_admin import auth
 import json
 import requests
@@ -258,3 +258,26 @@ def change_user_saved_restaurants(request):
         return HttpResponse("success", status=200)
     else:
         return HttpResponse("could not find user or restaurant", status=404)
+
+#Endpoint for creating a new claim request
+@csrf_exempt 
+@api_view(["POST"])
+def new_claim_request(request):
+    body = request.data 
+    uid = body.get('uid', None)
+    user = User.objects.filter(user_uid=uid).first()
+    if user:
+        claim_request = claim_requests(
+            user_id=user,
+            first_name=body['first_name'],
+            last_name=body['last_name'],
+            business_name=body['business_name'],
+            email=body['email'],
+            contact_person=body['contact_person'],
+            address=body['address'],
+            phone_number=body['phone_number'],
+        )
+        claim_request.save()
+        return JsonResponse({'message': 'Claim request created successfully'}, status=201)
+    else: 
+        return JsonResponse({"error": "failed to create claim request"}, status=500)
