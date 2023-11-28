@@ -8,7 +8,7 @@ import json
 import requests
 import os 
 import random
-import numpy as np
+
 api_key = os.environ.get("API_KEY")
 
 #This is a helper function to filter returned restaraunts from google
@@ -35,6 +35,7 @@ def filter_data(places, user_price, open_now=False):
 
     return result
 
+#Helper function, adds weight to restaurants retrieved from google
 def weight_data(restaurant_list, max_result_count):
     weight_array = []
     random_array_with_weight = []
@@ -45,13 +46,6 @@ def weight_data(restaurant_list, max_result_count):
         place_id = restaurant.get("id")
         existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
         review_count = len(CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all())
-        if existing_restaurant:
-            restaurant["id"] = existing_restaurant.id
-            continue
-        else:
-            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
-            new_restaurant.save()
-            restaurant["id"] = new_restaurant.id
         if review_count <= 25:
             weight += .4
         if review_count <= 50 and review_count > 25:
@@ -65,6 +59,14 @@ def weight_data(restaurant_list, max_result_count):
         if existing_restaurant and existing_restaurant.retaurant_level:
             weight += existing_restaurant.retaurant_level * .1
         weight_array.append(weight)
+
+        if existing_restaurant:
+            restaurant["id"] = existing_restaurant.id
+            continue
+        else:
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+            new_restaurant.save()
+            restaurant["id"] = new_restaurant.id
 
     for weight in weight_array:
         new_weight = weight * random.randint(1,100)
@@ -131,7 +133,6 @@ def query_restaraurant(request):
 
     data = {
         "includedTypes": cuisine_options,
-        # "maxResultCount": max_result_count,
         "locationRestriction": location_restriction,
     }
 
@@ -146,7 +147,9 @@ def query_restaraurant(request):
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
+        print(filtered_results)
         weighted_results = weight_data(filtered_results, max_result_count)
+        print(weighted_results)
   
         return JsonResponse({"result": weighted_results}, status=200)
     else:
@@ -177,6 +180,10 @@ def user_history(request):
     data = visited_history.objects.filter(user_id=user).all()
     history = list(data.values())
     if history:
+        for restaurant in history:
+            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
+            restaurant_detail = data.values()
+            restaurant["name"] = restaurant_detail[0]["business_name"]
         return JsonResponse({"success": history}, status=200)
     else:
         return JsonResponse({"error": "no history found "}, status=500)
@@ -199,7 +206,7 @@ def add_to_user_history(request):
     else: 
         return JsonResponse({"error": "failed to save history"}, status=500)
 
-
+#Endpoint for creating new review
 @api_view(["POST"])
 @csrf_exempt
 def new_review(request):
@@ -219,4 +226,39 @@ def new_review(request):
         return JsonResponse({"error": "failed to save history"}, status=500)
 
     
+#Endpoint for getting user favorites
+@csrf_exempt
+def get_user_saved_restaurants(request):
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    user = User.objects.filter(user_uid=uid).exists()
+    data = visited_history.objects.filter(user_id=user, saved=True).all()
+    saved_restaurants = list(data.values())
+    if saved_restaurants:
+        return JsonResponse({"message": saved_restaurants})
+    else:
+        return JsonResponse({"message": "No saved restaurants"})
     
+
+#Endpoint for adding or removing to user favorites
+@api_view(["PATCH"])
+@csrf_exempt
+def change_user_saved_restaurants(request):
+    if request.method == 'PATCH':
+        body = request.data
+        print(body)
+        uid = body.get("uid", None)
+        user = User.objects.filter(user_uid=uid).exists()
+        restaurant_id = body.get("restaurantId", None)
+        print(restaurant_id)
+        if user and restaurant_id:
+            data = visited_history.objects.filter(user_id=user, restaurant_id=restaurant_id)
+            if data:
+                data_to_update = data.first()
+                print(data_to_update.saved)
+                data_to_update.saved = not data_to_update.saved
+                print(data_to_update.saved)
+                data_to_update.save()
+               
+        return HttpResponse("success", status=200)
+    else:
+        return HttpResponse("could not find user or restaurant", status=404)
