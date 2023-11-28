@@ -35,6 +35,7 @@ def filter_data(places, user_price, open_now=False):
 
     return result
 
+#Helper function, adds weight to restaurants retrieved from google
 def weight_data(restaurant_list, max_result_count):
     weight_array = []
     random_array_with_weight = []
@@ -176,6 +177,10 @@ def user_history(request):
     data = visited_history.objects.filter(user_id=user).all()
     history = list(data.values())
     if history:
+        for restaurant in history:
+            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
+            restaurant_detail = data.values()
+            restaurant["name"] = restaurant_detail[0]["business_name"]
         return JsonResponse({"success": history}, status=200)
     else:
         return JsonResponse({"error": "no history found "}, status=500)
