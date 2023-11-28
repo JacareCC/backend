@@ -51,3 +51,14 @@ class visited_history(models.Model):
     restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     date_visited = models.DateTimeField(auto_now_add=True)
     saved = models.BooleanField(default=False)
+
+class claim_requests(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=200)
+    last_name = models.CharField(max_length=200)
+    business_name = models.CharField(max_length=100, null=True)
+    email = models.EmailField(unique=True, null=True)
+    contact_person = models.CharField(max_length=200, null=True)
+    address = models.CharField(max_length=200, null=True)
+    phone_number = models.CharField(max_length=15, null=True)
+    status = models.CharField(max_length=20, default='pending')
