@@ -234,6 +234,10 @@ def get_user_saved_restaurants(request):
     data = visited_history.objects.filter(user_id=user, saved=True).all()
     saved_restaurants = list(data.values())
     if saved_restaurants:
+        for restaurant in saved_restaurants:
+            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
+            restaurant_detail = data.values()
+            restaurant["name"] = restaurant_detail[0]["business_name"]
         return JsonResponse({"message": saved_restaurants})
     else:
         return JsonResponse({"message": "No saved restaurants"})
@@ -245,19 +249,21 @@ def get_user_saved_restaurants(request):
 def change_user_saved_restaurants(request):
     if request.method == 'PATCH':
         body = request.data
+        print(body)
         uid = body.get("uid", None)
+        id = body.get("id", None)
         user = User.objects.filter(user_uid=uid).exists()
         restaurant_id = body.get("restaurantId", None)
         if user and restaurant_id:
-            data = visited_history.objects.filter(user_id=user, restaurant_id=restaurant_id)
+            data = visited_history.objects.filter(id=id, user_id=user, restaurant_id=restaurant_id)
             if data:
                 data_to_update = data.first()
                 data_to_update.saved = not data_to_update.saved
                 data_to_update.save()
 
-        return HttpResponse("success", status=200)
+        return JsonResponse({'message': 'Restaurant removed from saved'}, status=200)
     else:
-        return HttpResponse("could not find user or restaurant", status=404)
+        return JsonResponse({"message" : "could not find user or restaurant"}, status=404)
 
 #Endpoint for creating a new claim request
 @csrf_exempt 
