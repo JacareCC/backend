@@ -270,8 +270,11 @@ def change_user_saved_restaurants(request):
 @api_view(["POST"])
 def new_claim_request(request):
     body = request.data 
-    uid = body.get('uid', None)
+    print(body)
+    uid = body.get('user_uid', None)
+    print(uid)
     user = User.objects.filter(user_uid=uid).first()
+    print(user)
     if user:
         claim_request = claim_requests(
             user_id=user,
