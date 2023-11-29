@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, visited_history, CustomerReviews
+from .models import User, Restaurant, visited_history, CustomerReviews, claim_requests
 from firebase_admin import auth
 import json
 import requests
@@ -234,6 +234,10 @@ def get_user_saved_restaurants(request):
     data = visited_history.objects.filter(user_id=user, saved=True).all()
     saved_restaurants = list(data.values())
     if saved_restaurants:
+        for restaurant in saved_restaurants:
+            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
+            restaurant_detail = data.values()
+            restaurant["name"] = restaurant_detail[0]["business_name"]
         return JsonResponse({"message": saved_restaurants})
     else:
         return JsonResponse({"message": "No saved restaurants"})
@@ -247,18 +251,42 @@ def change_user_saved_restaurants(request):
         body = request.data
         print(body)
         uid = body.get("uid", None)
+        id = body.get("id", None)
         user = User.objects.filter(user_uid=uid).exists()
         restaurant_id = body.get("restaurantId", None)
-        print(restaurant_id)
         if user and restaurant_id:
-            data = visited_history.objects.filter(user_id=user, restaurant_id=restaurant_id)
+            data = visited_history.objects.filter(id=id, user_id=user, restaurant_id=restaurant_id)
             if data:
                 data_to_update = data.first()
-                print(data_to_update.saved)
                 data_to_update.saved = not data_to_update.saved
-                print(data_to_update.saved)
                 data_to_update.save()
-               
-        return HttpResponse("success", status=200)
+
+        return JsonResponse({'message': 'Restaurant removed from saved'}, status=200)
     else:
-        return HttpResponse("could not find user or restaurant", status=404)
+        return JsonResponse({"message" : "could not find user or restaurant"}, status=404)
+
+#Endpoint for creating a new claim request
+@csrf_exempt 
+@api_view(["POST"])
+def new_claim_request(request):
+    body = request.data 
+    print(body)
+    uid = body.get('user_uid', None)
+    print(uid)
+    user = User.objects.filter(user_uid=uid).first()
+    print(user)
+    if user:
+        claim_request = claim_requests(
+            user_id=user,
+            first_name=body['first_name'],
+            last_name=body['last_name'],
+            business_name=body['business_name'],
+            email=body['email'],
+            contact_person=body['contact_person'],
+            address=body['address'],
+            phone_number=body['phone_number'],
+        )
+        claim_request.save()
+        return JsonResponse({'message': 'Claim request created successfully'}, status=201)
+    else: 
+        return JsonResponse({"error": "failed to create claim request"}, status=500)
