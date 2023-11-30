@@ -341,3 +341,16 @@ def new_tier_level(request):
         JsonResponse({"error": "restaurant not found"}, status=404)
 
 
+#Endpoint for getting all tiers for a given restaurant 
+@csrf_exempt
+def get_all_tiers(request):
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    user = User.objects.filter(user_uid=uid).first()
+    restaurant = Restaurant.objects.filter(owner_user_id=user)
+    data = TierReward.objects.filter(restaurant_id=restaurant).all()
+
+    if data:
+        tiers = list(data.values())
+        JsonResponse({"success": tiers}, status=200, safe=False)
+    else: 
+        JsonResponse({"error": "faield to get tiers"}, status=500, safe=False)
