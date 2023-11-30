@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from jacare.models import claim_requests
+from jacare.models import claim_requests, Restaurant
 
 
 
@@ -17,3 +17,11 @@ class claimRequestsAdmin(admin.ModelAdmin):
         queryset.update(status='rejected')
 
 admin.site.register(claim_requests, claimRequestsAdmin)
+
+class RestaurantAdmin(admin.ModelAdmin):
+    list_display = ('business_name', 'email', 'phone_number', 'contact_person', 'retaurant_level', 'address', 'claimed', 'owner_user_id')
+    list_filter = ('claimed', 'retaurant_level', 'owner_user_id')
+    search_fields = ('business_name', 'email', 'phone_number', 'contact_person', 'address')
+    list_editable = ('owner_user_id',) 
+
+admin.site.register(Restaurant, RestaurantAdmin)

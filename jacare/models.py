@@ -19,6 +19,9 @@ class Restaurant(models.Model):
     claimed = models.BooleanField()
     owner_user_id = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
+    def __str__(self):
+        return self.title
+
 class CustomerReviews(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
@@ -63,3 +66,6 @@ class claim_requests(models.Model):
     address = models.CharField(max_length=200)
     phone_number = models.CharField(max_length=15)
     status = models.CharField(max_length=20, default='pending')
+
+    def __str__(self):
+        return self.title
