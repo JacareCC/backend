@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, VisitedHistory, CustomerReviews, RegistrationRequests, Points, TierReward
+from .models import User, Restaurant, VisitedHistory, CustomerReviews, RegistrationRequests, Points, TierReward, UserTier
 from firebase_admin import auth
 import json
 import requests
@@ -147,10 +147,7 @@ def query_restaraurant(request):
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
-        print(filtered_results)
         weighted_results = weight_data(filtered_results, max_result_count)
-        print(weighted_results)
-  
         return JsonResponse({"result": weighted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
@@ -219,8 +216,14 @@ def new_review(request):
     if restaurant and user:
         new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
         new_review_made.save()
-        points = Points(user_id=user, value=1)
-        points.save()
+        user_points_exists = Points.objects(user_id=user).exists()
+        if user_points_exists:
+            user_points = Points.objects.filter(user_id=user).first()
+            user_points.value += 1
+            user_points.save()
+        else:
+            new_user_points = Points(user_id=user, value=1)
+            new_user_points.save()
         return HttpResponse("success", status=201)
     else: 
         return JsonResponse({"error": "failed to save review"}, status=500)
@@ -249,7 +252,6 @@ def get_user_saved_restaurants(request):
 def change_user_saved_restaurants(request):
     if request.method == 'PATCH':
         body = request.data
-        print(body)
         uid = body.get("uid", None)
         id = body.get("id", None)
         user = User.objects.filter(user_uid=uid).exists()
@@ -300,8 +302,9 @@ def verify_review(request):
             review.isVerified = not review.isVerified
             review.save()
             user = review.user_id 
-            points = Points(value=5, user_id=user)
-            points.save()
+            user_points = Points.objects.filter(user_id=user).first()
+            user_points.value += 5
+            user_points.save()
         return JsonResponse({'success': 'Verified'}, status=200, safe=False)
     else:
         return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
@@ -355,8 +358,40 @@ def get_all_tiers(request):
         return JsonResponse({"error": "faield to get tiers"}, status=500, safe=False)
 
 
-# #Endpoint for purchasing tiers with points
-# @api_view(["POST"])
-# @csrf_exempt
-# def purchase_tier(request):
+#Endpoint for purchasing tiers with points
+@api_view(["POST"])
+@csrf_exempt
+def purchase_tier(request):
+    body = request.data
+    tier_id = body.get("tierId", None)
+    user_uid = body.get("uid", None)
+    restaurant_id = body.get("restaurantId", None)
+    restaurant = Restaurant.objects.filter(id=restaurant_id).first()
+    user = User.objects.filter(user_uid=user_uid).first()
+    tier = TierReward.objects.filter(id=tier_id).first()
+    cost = tier.points_required
+    tier_exists = UserTier.objects.filter(user_id=user, tier_level=tier, restaurant_id=restaurant).exists()
+
+    if not user:
+        return JsonResponse({"error": "user not found"}, status=404)
+    elif not restaurant:
+        return JsonResponse({"error": "restaurant not found"}, status=404)
+    elif not tier:
+        return JsonResponse({"error": "tier not found"}, status=404)
+    elif tier_exists:
+        return JsonResponse({"error": "user already has tier"}, status=404)
+    else:
+        user_points = Points.objects.filter(user_id=user).first()
+        if user_points.value < cost:
+            return JsonResponse({"error": "not enough points"}, status=404)
+        else: 
+            new_user_tier = UserTier(user_id=user, tier_level=tier, restaurant_id=restaurant)
+            new_user_tier.save()
+            user_points.value -= cost
+            user_points.save()
+            return JsonResponse({"success": "purchased new tier"}, status=201)
+
+
+
+
     

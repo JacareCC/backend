@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from jacare.models import claim_requests, Restaurant
+from jacare.models import RegistrationRequests, Restaurant
 
 
 
-class claimRequestsAdmin(admin.ModelAdmin):
+class RegistrationRequestsAdmin(admin.ModelAdmin):
     list_display = ('user_id', 'business_name', 'status', )
     actions = ['approve_requests', 'reject_requests']
 
@@ -16,7 +16,7 @@ class claimRequestsAdmin(admin.ModelAdmin):
     def reject_requests(self, request, queryset):
         queryset.update(status='rejected')
 
-admin.site.register(claim_requests, claimRequestsAdmin)
+admin.site.register(RegistrationRequests, RegistrationRequestsAdmin)
 
 class RestaurantAdmin(admin.ModelAdmin):
     list_display = ('business_name', 'email', 'phone_number', 'contact_person', 'retaurant_level', 'address', 'claimed', 'owner_user_id')
