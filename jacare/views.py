@@ -307,3 +307,17 @@ def verify_review(request):
         return JsonResponse({'success': 'Verified'}, status=200, safe=False)
     else:
         return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
+
+#Endpoint for businsses to view all their reviews
+@csrf_exempt
+def get_reviews(request):
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    restaurant = Restaurant.objects.filter(owner_user_id=uid).first()   
+    data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
+    reviews = list(data.values())
+    if reviews:
+        return JsonResponse({"success": reviews}, status=200)
+    else:
+        return JsonResponse({"error": "failed to get reviews"}, status=500)
+
+    
