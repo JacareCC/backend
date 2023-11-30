@@ -311,8 +311,9 @@ def verify_review(request):
 #Endpoint for businsses to view all their reviews
 @csrf_exempt
 def get_reviews(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-    restaurant = Restaurant.objects.filter(owner_user_id=uid).first()   
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
+    user = User.objects.filter(user_uid=uid).first()
+    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
     data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
     reviews = list(data.values())
     if reviews:
@@ -354,3 +355,6 @@ def get_all_tiers(request):
         JsonResponse({"success": tiers}, status=200, safe=False)
     else: 
         JsonResponse({"error": "faield to get tiers"}, status=500, safe=False)
+
+#Endpoint for a user purchasing a tier level using points
+
