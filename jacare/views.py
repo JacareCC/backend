@@ -321,7 +321,22 @@ def get_reviews(request):
         return JsonResponse({"success": reviews}, status=200)
     else:
         return JsonResponse({"error": "failed to get reviews"}, status=500)
-    
+
+#Endpoint for business editing their tier
+@api_view(["PATCH"])
+@csrf_exempt
+def edit_tier(request, id):
+    if request.method == 'PATCH':
+        body = request.data
+        tier = TierReward.objects.get(id=id)
+        if tier:
+            tier.reward_level = body.get("tier", tier.reward_level)
+            tier.reward_description = body.get("description", tier.reward_description)
+            tier.points_required = body.get("cost", tier.points_required)
+            tier.save()
+        return JsonResponse({'success': 'tier edited'}, status=200, safe=False)
+    else:
+        return JsonResponse({"error" : "failed to edit"}, status=404, safe=False)
 
 #Endpoint for business creating a tier reward level
 @api_view(["POST"])
@@ -334,13 +349,26 @@ def new_tier_level(request):
 
     if restaurant:
         reward_level = body.get("tier", None)
-        reward_description = body.get("reward", None)
+        reward_description = body.get("description", None)
         points_required = body.get("points", None)
         tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant)
         tier.save()
         return JsonResponse({"success": "tier created"}, status=201)
     else: 
         return JsonResponse({"error": "restaurant not found"}, status=404)
+    
+
+#Endpoint for business deleting a tier reward level
+@api_view(["DELETE"])
+@csrf_exempt
+def delete_tier_level(request, id):
+    tier_id = id
+    tier = TierReward.objects.get(id=tier_id)
+    if tier:
+        tier.delete()
+        return JsonResponse({"sucess": "deleted"}, status=204)
+    else:
+        return JsonResponse({"error": "tier not found"}, status=404)
 
 
 #Endpoint for getting all tiers for a given restaurant 
