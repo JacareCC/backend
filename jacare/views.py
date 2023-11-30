@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, visited_history, CustomerReviews, claim_requests, Points, TierReward
+from .models import User, Restaurant, VisitedHistory, CustomerReviews, RegistrationRequests, Points, TierReward
 from firebase_admin import auth
 import json
 import requests
@@ -177,7 +177,7 @@ def restaurant_detail(request, id):
 def user_history(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
     user = User.objects.filter(user_uid=uid).first()
-    data = visited_history.objects.filter(user_id=user).all()
+    data = VisitedHistory.objects.filter(user_id=user).all()
     history = list(data.values())
     if history:
         for restaurant in history:
@@ -200,7 +200,7 @@ def add_to_user_history(request):
     restaurant = Restaurant.objects.filter(id=restaurant_id).first()
     
     if user: 
-        new_history = visited_history(restaurant_id=restaurant, user_id=user)
+        new_history = VisitedHistory(restaurant_id=restaurant, user_id=user)
         new_history.save()
         return HttpResponse("success", status=201)
     else: 
@@ -231,7 +231,7 @@ def new_review(request):
 def get_user_saved_restaurants(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
     user = User.objects.filter(user_uid=uid).exists()
-    data = visited_history.objects.filter(user_id=user, saved=True).all()
+    data = VisitedHistory.objects.filter(user_id=user, saved=True).all()
     saved_restaurants = list(data.values())
     if saved_restaurants:
         for restaurant in saved_restaurants:
@@ -255,7 +255,7 @@ def change_user_saved_restaurants(request):
         user = User.objects.filter(user_uid=uid).exists()
         restaurant_id = body.get("restaurantId", None)
         if user and restaurant_id:
-            data = visited_history.objects.filter(id=id, user_id=user, restaurant_id=restaurant_id)
+            data = VisitedHistory.objects.filter(id=id, user_id=user, restaurant_id=restaurant_id)
             if data:
                 data_to_update = data.first()
                 data_to_update.saved = not data_to_update.saved
@@ -268,12 +268,12 @@ def change_user_saved_restaurants(request):
 #Endpoint for creating a new claim request
 @csrf_exempt 
 @api_view(["POST"])
-def new_claim_request(request):
+def new_registration_request(request):
     body = request.data 
     uid = body.get('user_uid', None)
     user = User.objects.filter(user_uid=uid).first()
     if user:
-        claim_request = claim_requests(
+        registration = RegistrationRequests(
             user_id=user,
             first_name=body['first_name'],
             last_name=body['last_name'],
@@ -283,10 +283,10 @@ def new_claim_request(request):
             address=body['address'],
             phone_number=body['phone_number'],
         )
-        claim_request.save()
-        return JsonResponse({'message': 'Claim request created successfully'}, status=201)
+        registration.save()
+        return JsonResponse({'message': 'Registration request created successfully'}, status=201)
     else: 
-        return JsonResponse({"error": "failed to create claim request"}, status=500)
+        return JsonResponse({"error": "failed to create registration request"}, status=500)
     
 #Endpoint for verifying reviews
 @api_view(["PATCH"])
@@ -355,3 +355,8 @@ def get_all_tiers(request):
         return JsonResponse({"error": "faield to get tiers"}, status=500, safe=False)
 
 
+# #Endpoint for purchasing tiers with points
+# @api_view(["POST"])
+# @csrf_exempt
+# def purchase_tier(request):
+    

@@ -51,13 +51,13 @@ class Points(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     expires_at = models.DateTimeField(null=True)
 
-class visited_history(models.Model):
+class VisitedHistory(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     date_visited = models.DateTimeField(auto_now_add=True)
     saved = models.BooleanField(default=False)
 
-class claim_requests(models.Model):
+class RegistrationRequests(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
