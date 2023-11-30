@@ -18,10 +18,10 @@ class Restaurant(models.Model):
     address = models.CharField(max_length=200, null=True)
     claimed = models.BooleanField()
     owner_user_id = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-
-
     def __str__(self):
         return self.business_name
+    
+    
 class CustomerReviews(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
