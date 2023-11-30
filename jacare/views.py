@@ -329,13 +329,13 @@ def new_tier_level(request):
     body = request.data
     uid = body.get("uid", None)
     user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user)
+    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
 
     if restaurant:
         reward_level = body.get("tier", None)
         reward_description = body.get("reward", None)
         points_required = body.get("points", None)
-        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required)
+        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant)
         tier.save()
         return JsonResponse({"success": "tier created"}, status=201)
     else: 
