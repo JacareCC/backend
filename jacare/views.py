@@ -391,6 +391,26 @@ def purchase_tier(request):
             user_points.save()
             return JsonResponse({"success": "purchased new tier"}, status=201)
 
+#Endpoint for user getting all their tiers
+@csrf_exempt
+def get_all_user_tiers(request):
+    uid = request.headers.get("Authorization ", " ").splice("Bearer ")[-1]
+    user = User.objects.filter(user_uid=uid).first()
+    if not user:
+        return JsonResponse({"error": "user not found"}, status=404)
+    data = UserTier.objects.filter(user_id=user).all()
+    user_tiers = list(data.values())
+    if user_tiers:
+        for tier in user_tiers:
+            restaurant = Restaurant.objects.filter(id=tier["restaurant_id_id"]).first()
+            tier_level = TierReward.objects.filter(id=tier["tier_level_id"]).first()
+            if restaurant and tier_level:
+                tier["restaurant"] = {"id": restaurant.id, "name": restaurant.business_name}    
+                tier["level"] = {"id": tier_level.id, "name": tier_level.reward_level, "reward": tier_level.reward_description}
+                return JsonResponse({"success": user_tiers}, status=200)
+    else: 
+        return JsonResponse({"error": "no tiers found"}, status=404)
+
 
 
 
