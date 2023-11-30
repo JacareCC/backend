@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, visited_history, CustomerReviews, claim_requests
+from .models import User, Restaurant, visited_history, CustomerReviews, claim_requests, Points
 from firebase_admin import auth
 import json
 import requests
@@ -221,6 +221,8 @@ def new_review(request):
     if restaurant and user:
         new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
         new_review_made.save()
+        points = Points(user_id=user, value=1)
+        points.save()
         return HttpResponse("success", status=201)
     else: 
         return JsonResponse({"error": "failed to save history"}, status=500)
@@ -290,3 +292,18 @@ def new_claim_request(request):
         return JsonResponse({'message': 'Claim request created successfully'}, status=201)
     else: 
         return JsonResponse({"error": "failed to create claim request"}, status=500)
+    
+#Endpoint for verifying reviews
+@api_view(["PATCH"])
+@csrf_exempt
+def verify_review(request):
+    if request.method == 'PATCH':
+        body = request.data
+        id = body.get("id", None)
+        review = CustomerReviews.objects.filter(id=id).first()
+        if review:
+            review.isVerified = not review.isVerified
+            review.save()
+        return JsonResponse({'success': 'Verified'}, status=200, safe=False)
+    else:
+        return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
