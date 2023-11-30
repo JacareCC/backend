@@ -29,20 +29,20 @@ class CustomerReviews(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     isVerified = models.BooleanField(default=False)
 
-class Tier(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    level = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_update = models.DateTimeField(auto_now=True)
-    expires_at = models.DateTimeField(null=True)
 
 class TierReward(models.Model):
     restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    reward_level = models.IntegerField()
+    reward_level = models.CharField()
     reward_description = models.TextField()
-    refresh = models.IntegerField()
     points_required = models.IntegerField()
+
+class UserTier(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant_id = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField(null=True)
+    tier_level = models.ForeignKey(TierReward, on_delete=models.CASCADE)
 
 class Points(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)

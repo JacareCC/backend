@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, visited_history, CustomerReviews, claim_requests, Points
+from .models import User, Restaurant, visited_history, CustomerReviews, claim_requests, Points, TierReward
 from firebase_admin import auth
 import json
 import requests
@@ -319,5 +319,25 @@ def get_reviews(request):
         return JsonResponse({"success": reviews}, status=200)
     else:
         return JsonResponse({"error": "failed to get reviews"}, status=500)
-
     
+
+#Endpoint for business creating a tier reward level
+@api_view(["POST"])
+@csrf_exempt
+def new_tier_level(request):
+    body = request.data
+    uid = body.get("uid", None)
+    user = User.objects.filter(user_uid=uid).first()
+    restaurant = Restaurant.objects.filter(owner_user_id=user)
+
+    if restaurant:
+        reward_level = body.get("tier", None)
+        reward_description = body.get("reward", None)
+        points_required = body.get("points", None)
+        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required)
+        tier.save()
+        return JsonResponse({"success": "tier created"}, status=201)
+    else: 
+        JsonResponse({"error": "restaurant not found"}, status=404)
+
+
