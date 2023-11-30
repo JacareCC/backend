@@ -213,8 +213,6 @@ def new_review(request):
     body = request.data
     restaurant_id = body.get('restaurant_place_id', None)
     user_uid = body.get('user_uid', None)
-    
-
     user = User.objects.filter(user_uid=user_uid).first()
     restaurant = Restaurant.objects.filter(id=restaurant_id).first()
 
@@ -225,7 +223,7 @@ def new_review(request):
         points.save()
         return HttpResponse("success", status=201)
     else: 
-        return JsonResponse({"error": "failed to save history"}, status=500)
+        return JsonResponse({"error": "failed to save review"}, status=500)
 
     
 #Endpoint for getting user favorites
@@ -272,11 +270,8 @@ def change_user_saved_restaurants(request):
 @api_view(["POST"])
 def new_claim_request(request):
     body = request.data 
-    print(body)
     uid = body.get('user_uid', None)
-    print(uid)
     user = User.objects.filter(user_uid=uid).first()
-    print(user)
     if user:
         claim_request = claim_requests(
             user_id=user,
@@ -304,6 +299,9 @@ def verify_review(request):
         if review:
             review.isVerified = not review.isVerified
             review.save()
+            user = review.user_id 
+            points = Points(value=5, user_id=user)
+            points.save()
         return JsonResponse({'success': 'Verified'}, status=200, safe=False)
     else:
         return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
@@ -339,7 +337,7 @@ def new_tier_level(request):
         tier.save()
         return JsonResponse({"success": "tier created"}, status=201)
     else: 
-        JsonResponse({"error": "restaurant not found"}, status=404)
+        return JsonResponse({"error": "restaurant not found"}, status=404)
 
 
 #Endpoint for getting all tiers for a given restaurant 
@@ -347,14 +345,13 @@ def new_tier_level(request):
 def get_all_tiers(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
     user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user)
+    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
     data = TierReward.objects.filter(restaurant_id=restaurant).all()
 
     if data:
         tiers = list(data.values())
-        JsonResponse({"success": tiers}, status=200, safe=False)
+        return JsonResponse({"success": tiers}, status=200, safe=False)
     else: 
-        JsonResponse({"error": "faield to get tiers"}, status=500, safe=False)
+        return JsonResponse({"error": "faield to get tiers"}, status=500, safe=False)
 
-#Endpoint for a user purchasing a tier level using points
 
