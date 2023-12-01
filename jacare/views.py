@@ -39,7 +39,6 @@ def register_user(request):
     else:
         new_user = User(user_uid=uid)
         new_user.save()
-
         return JsonResponse({"success": "User registered successfully"}, status=201)
 
 #This is a helper function to filter returned restaraunts from google
@@ -135,7 +134,7 @@ def query_restaraurant(request):
     json_data = {
         "includedTypes": cuisine_options,
         "locationRestriction": location_restriction,
-        # "excludedPrimaryType": ["hotel", "resort_hotel", "department_store"]
+        "excludedPrimaryTypes": ["hotel", "resort_hotel", "department_store"]
     }
 
     headers = {
