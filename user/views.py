@@ -4,38 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from user.models import User, VisitedHistory, UserTier, Points
 from business.models import Restaurant, TierReward
 from rest_framework.decorators import api_view
-import json
 # Create your views here.
-#Endpoint for logging users in
-@csrf_exempt
-def login_user(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-
-    user = User.objects.filter(user_uid=uid).exists()
-    
-    if user:
-        return JsonResponse({"success": "Logged in"}, status=200)
-    else: 
-        return JsonResponse({"Error": "Please register before logging in"}, status=401)
-    
-
-#Endpoint for registering users 
-@api_view(['POST'])
-@csrf_exempt
-def register_user(request):
-    body_unicode = request.body.decode('utf-8')
-    body = json.loads(body_unicode)
-    uid = body["uid"]
-
-    user_exists = User.objects.filter(user_uid=uid).exists()
-
-    if user_exists:
-        return JsonResponse({"error": "User already registered"}, status=400)
-    else:
-        new_user = User(user_uid=uid)
-        new_user.save()
-
-        return JsonResponse({"success": "User registered successfully"}, status=201)
 
 #Endpoint to retrieve visited history 
 @csrf_exempt

@@ -7,8 +7,40 @@ from business.models import Restaurant, TierReward
 import requests
 import os 
 import random
+import json
 
 api_key = os.environ.get("API_KEY")
+
+#Endpoint for logging users in
+@csrf_exempt
+def login_user(request):
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+
+    user = User.objects.filter(user_uid=uid).exists()
+    
+    if user:
+        return JsonResponse({"success": "Logged in"}, status=200)
+    else: 
+        return JsonResponse({"Error": "Please register before logging in"}, status=401)
+    
+
+#Endpoint for registering users 
+@api_view(['POST'])
+@csrf_exempt
+def register_user(request):
+    body_unicode = request.body.decode('utf-8')
+    body = json.loads(body_unicode)
+    uid = body["uid"]
+
+    user_exists = User.objects.filter(user_uid=uid).exists()
+
+    if user_exists:
+        return JsonResponse({"error": "User already registered"}, status=400)
+    else:
+        new_user = User(user_uid=uid)
+        new_user.save()
+
+        return JsonResponse({"success": "User registered successfully"}, status=201)
 
 #This is a helper function to filter returned restaraunts from google
 def filter_data(places, user_price, open_now=False):
@@ -103,6 +135,7 @@ def query_restaraurant(request):
     json_data = {
         "includedTypes": cuisine_options,
         "locationRestriction": location_restriction,
+        # "excludedPrimaryType": ["hotel", "resort_hotel", "department_store"]
     }
 
     headers = {
