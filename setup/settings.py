@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'jacare',
-    'corsheaders'
+    'corsheaders',
+    'user',
+    'business'
 ]
 
 MIDDLEWARE = [
