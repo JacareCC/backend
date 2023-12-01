@@ -1,10 +1,9 @@
 from django.http import JsonResponse, HttpResponse
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from .models import User, Restaurant, VisitedHistory, CustomerReviews, RegistrationRequests, Points, TierReward, UserTier
-from firebase_admin import auth
-import json
+from .models import CustomerReviews
+from user.models import User, Points, UserTier
+from business.models import Restaurant, TierReward
 import requests
 import os 
 import random
@@ -78,36 +77,6 @@ def weight_data(restaurant_list, max_result_count):
         results_for_fe.append(restaurant_list[index])
     return results_for_fe
 
-#Endpoint for logging users in
-@csrf_exempt
-def login_user(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-
-    user = User.objects.filter(user_uid=uid).exists()
-    
-    if user:
-        return JsonResponse({"success": "Logged in"}, status=200)
-    else: 
-        return JsonResponse({"Error": "Please register before logging in"}, status=401)
-
-#Endpoint for registering users 
-@api_view(['POST'])
-@csrf_exempt
-def register_user(request):
-    body_unicode = request.body.decode('utf-8')
-    body = json.loads(body_unicode)
-    uid = body["uid"]
-
-    user_exists = User.objects.filter(user_uid=uid).exists()
-
-    if user_exists:
-        return JsonResponse({"error": "User already registered"}, status=400)
-    else:
-        new_user = User(user_uid=uid)
-        new_user.save()
-
-        return JsonResponse({"success": "User registered successfully"}, status=201)
-    
 #Endpoint to query restaraunts from google 
 @api_view(['POST'])
 @csrf_exempt
@@ -117,7 +86,7 @@ def query_restaraurant(request):
     cuisine_options = body.get("cuisineOptions", None)
     location = body.get("location", None)
     price = body.get("price", None)
-    distance = body.get("distanceToTravel", None)
+    distance = body.get("distanceToTravel", 500)
     openNow = body.get("openNow", None)
     max_result_count = body.get("amountOfOptions", None)
 
@@ -131,7 +100,7 @@ def query_restaraurant(request):
         }   
     }
 
-    data = {
+    json_data = {
         "includedTypes": cuisine_options,
         "locationRestriction": location_restriction,
     }
@@ -142,12 +111,22 @@ def query_restaraurant(request):
         "X-Goog-FieldMask":"places.location,places.displayName,places.priceLevel,places.currentOpeningHours,places.id"
     }
 
-    response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=data, headers=headers)
 
+    response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=json_data, headers=headers)
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
+        while len(filtered_results) < max_result_count:
+            distance *= 2
+            location_restriction["circle"]["radius"] = distance
+            response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=json_data, headers=headers)
+            data = response.json()
+            filtered_results = filter_data(data.get('places', []), price, openNow)
+          
+            
         weighted_results = weight_data(filtered_results, max_result_count)
+
+        
         return JsonResponse({"result": weighted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
@@ -168,40 +147,6 @@ def restaurant_detail(request, id):
         return JsonResponse({"success": data}, status=200)
     else:
         return JsonResponse({"error": "no restaraunt found"}, status=500)
-
-#Endpoint to retrieve visited history 
-@csrf_exempt
-def user_history(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-    user = User.objects.filter(user_uid=uid).first()
-    data = VisitedHistory.objects.filter(user_id=user).all()
-    history = list(data.values())
-    if history:
-        for restaurant in history:
-            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
-            restaurant_detail = data.values()
-            restaurant["name"] = restaurant_detail[0]["business_name"]
-        return JsonResponse({"success": history}, status=200)
-    else:
-        return JsonResponse({"error": "no history found "}, status=500)
-    
-#Endpoint to add to visited history
-@api_view(['POST'])
-@csrf_exempt
-def add_to_user_history(request):  
-    body = request.data
-    restaurant_id = body.get('restaurant_id', None)
-    user_uid = body.get('uid', None)
-
-    user = User.objects.filter(user_uid=user_uid).first()
-    restaurant = Restaurant.objects.filter(id=restaurant_id).first()
-    
-    if user: 
-        new_history = VisitedHistory(restaurant_id=restaurant, user_id=user)
-        new_history.save()
-        return HttpResponse("success", status=201)
-    else: 
-        return JsonResponse({"error": "failed to save history"}, status=500)
 
 #Endpoint for creating new review
 @api_view(["POST"])
@@ -227,164 +172,6 @@ def new_review(request):
         return HttpResponse("success", status=201)
     else: 
         return JsonResponse({"error": "failed to save review"}, status=500)
-
-    
-#Endpoint for getting user favorites
-@csrf_exempt
-def get_user_saved_restaurants(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-    user = User.objects.filter(user_uid=uid).exists()
-    data = VisitedHistory.objects.filter(user_id=user, saved=True).all()
-    saved_restaurants = list(data.values())
-    if saved_restaurants:
-        for restaurant in saved_restaurants:
-            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
-            restaurant_detail = data.values()
-            restaurant["name"] = restaurant_detail[0]["business_name"]
-        return JsonResponse({"message": saved_restaurants})
-    else:
-        return JsonResponse({"message": "No saved restaurants"})
-    
-
-#Endpoint for adding or removing to user favorites
-@api_view(["PATCH"])
-@csrf_exempt
-def change_user_saved_restaurants(request):
-    if request.method == 'PATCH':
-        body = request.data
-        uid = body.get("uid", None)
-        id = body.get("id", None)
-        user = User.objects.filter(user_uid=uid).exists()
-        restaurant_id = body.get("restaurantId", None)
-        if user and restaurant_id:
-            data = VisitedHistory.objects.filter(id=id, user_id=user, restaurant_id=restaurant_id)
-            if data:
-                data_to_update = data.first()
-                data_to_update.saved = not data_to_update.saved
-                data_to_update.save()
-
-        return JsonResponse({'message': 'Restaurant removed from saved'}, status=200)
-    else:
-        return JsonResponse({"message" : "could not find user or restaurant"}, status=404)
-
-#Endpoint for creating a new claim request
-@csrf_exempt 
-@api_view(["POST"])
-def new_registration_request(request):
-    body = request.data 
-    uid = body.get('user_uid', None)
-    user = User.objects.filter(user_uid=uid).first()
-    if user:
-        registration = RegistrationRequests(
-            user_id=user,
-            first_name=body['first_name'],
-            last_name=body['last_name'],
-            business_name=body['business_name'],
-            email=body['email'],
-            contact_person=body['contact_person'],
-            address=body['address'],
-            phone_number=body['phone_number'],
-        )
-        registration.save()
-        return JsonResponse({'message': 'Registration request created successfully'}, status=201)
-    else: 
-        return JsonResponse({"error": "failed to create registration request"}, status=500)
-    
-#Endpoint for verifying reviews
-@api_view(["PATCH"])
-@csrf_exempt
-def verify_review(request):
-    if request.method == 'PATCH':
-        body = request.data
-        id = body.get("id", None)
-        review = CustomerReviews.objects.filter(id=id).first()
-        if review:
-            review.isVerified = not review.isVerified
-            review.save()
-            user = review.user_id 
-            user_points = Points.objects.filter(user_id=user).first()
-            user_points.value += 5
-            user_points.save()
-        return JsonResponse({'success': 'Verified'}, status=200, safe=False)
-    else:
-        return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
-
-#Endpoint for businsses to view all their reviews
-@csrf_exempt
-def get_reviews(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
-    user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
-    data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
-    reviews = list(data.values())
-    if reviews:
-        return JsonResponse({"success": reviews}, status=200)
-    else:
-        return JsonResponse({"error": "failed to get reviews"}, status=500)
-
-#Endpoint for business editing their tier
-@api_view(["PATCH"])
-@csrf_exempt
-def edit_tier(request, id):
-    if request.method == 'PATCH':
-        body = request.data
-        tier = TierReward.objects.get(id=id)
-        if tier:
-            tier.reward_level = body.get("tier", tier.reward_level)
-            tier.reward_description = body.get("description", tier.reward_description)
-            tier.points_required = body.get("cost", tier.points_required)
-            tier.save()
-        return JsonResponse({'success': 'tier edited'}, status=200, safe=False)
-    else:
-        return JsonResponse({"error" : "failed to edit"}, status=404, safe=False)
-
-#Endpoint for business creating a tier reward level
-@api_view(["POST"])
-@csrf_exempt
-def new_tier_level(request):
-    body = request.data
-    uid = body.get("uid", None)
-    user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
-
-    if restaurant:
-        reward_level = body.get("tier", None)
-        reward_description = body.get("description", None)
-        points_required = body.get("points", None)
-        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant)
-        tier.save()
-        return JsonResponse({"success": "tier created"}, status=201)
-    else: 
-        return JsonResponse({"error": "restaurant not found"}, status=404)
-    
-
-#Endpoint for business deleting a tier reward level
-@api_view(["DELETE"])
-@csrf_exempt
-def delete_tier_level(request, id):
-    tier_id = id
-    tier = TierReward.objects.get(id=tier_id)
-    if tier:
-        tier.delete()
-        return JsonResponse({"sucess": "deleted"}, status=204)
-    else:
-        return JsonResponse({"error": "tier not found"}, status=404)
-
-
-#Endpoint for getting all tiers for a given restaurant 
-@csrf_exempt
-def get_all_tiers(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-    user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
-    data = TierReward.objects.filter(restaurant_id=restaurant).all()
-
-    if data:
-        tiers = list(data.values())
-        return JsonResponse({"success": tiers}, status=200, safe=False)
-    else: 
-        return JsonResponse({"error": "faield to get tiers"}, status=500, safe=False)
-
 
 #Endpoint for purchasing tiers with points
 @api_view(["POST"])
@@ -418,26 +205,6 @@ def purchase_tier(request):
             user_points.value -= cost
             user_points.save()
             return JsonResponse({"success": "purchased new tier"}, status=201)
-
-#Endpoint for user getting all their tiers
-@csrf_exempt
-def get_all_user_tiers(request):
-    uid = request.headers.get("Authorization ", " ").splice("Bearer ")[-1]
-    user = User.objects.filter(user_uid=uid).first()
-    if not user:
-        return JsonResponse({"error": "user not found"}, status=404)
-    data = UserTier.objects.filter(user_id=user).all()
-    user_tiers = list(data.values())
-    if user_tiers:
-        for tier in user_tiers:
-            restaurant = Restaurant.objects.filter(id=tier["restaurant_id_id"]).first()
-            tier_level = TierReward.objects.filter(id=tier["tier_level_id"]).first()
-            if restaurant and tier_level:
-                tier["restaurant"] = {"id": restaurant.id, "name": restaurant.business_name}    
-                tier["level"] = {"id": tier_level.id, "name": tier_level.reward_level, "reward": tier_level.reward_description}
-                return JsonResponse({"success": user_tiers}, status=200)
-    else: 
-        return JsonResponse({"error": "no tiers found"}, status=404)
 
 
 
