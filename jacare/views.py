@@ -1,5 +1,6 @@
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 from rest_framework.decorators import api_view
 from .models import CustomerReviews
 from user.models import User, Points, UserTier
@@ -40,6 +41,25 @@ def register_user(request):
         new_user = User(user_uid=uid)
         new_user.save()
         return JsonResponse({"success": "User registered successfully"}, status=201)
+    
+#This is a helper function to format result data 
+def format_data(restaurant_list):
+    for restaurant in restaurant_list:
+        place_id = restaurant.get("id")
+        existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
+        if existing_restaurant:
+            restaurant["id"] = existing_restaurant.id
+            restaurant["place_id"] = existing_restaurant.place_id
+            tier_data = TierReward.objects.filter(restaurant_id=existing_restaurant).all()
+            tier_array = list(tier_data.values())
+            restaurant["tiers"] = tier_array
+            continue
+        else:
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+            new_restaurant.save()
+            restaurant["place_id"] = new_restaurant.place_id
+            restaurant["id"] = new_restaurant.id
+    return restaurant_list
 
 #This is a helper function to filter returned restaraunts from google
 def filter_data(places, user_price, open_now=False):
@@ -89,19 +109,6 @@ def weight_data(restaurant_list, max_result_count):
         if existing_restaurant and existing_restaurant.retaurant_level:
             weight += existing_restaurant.retaurant_level * .1
         weight_array.append(weight)
-
-        if existing_restaurant:
-            restaurant["id"] = existing_restaurant.id
-            restaurant["place_id"] = existing_restaurant.place_id
-            tier_data = TierReward.objects.filter(restaurant_id=existing_restaurant).all()
-            tier_array = list(tier_data.values())
-            restaurant["tiers"] = tier_array
-            continue
-        else:
-            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
-            new_restaurant.save()
-            restaurant["place_id"] = new_restaurant.place_id
-            restaurant["id"] = new_restaurant.id
 
     for weight in weight_array:
         new_weight = weight * random.randint(1,100)
@@ -162,8 +169,9 @@ def query_restaraurant(request):
           
             
         weighted_results = weight_data(filtered_results, max_result_count)
-
-        return JsonResponse({"result": weighted_results}, status=200)
+        formatted_results = format_data(weighted_results)
+        
+        return JsonResponse({"result": formatted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
 
