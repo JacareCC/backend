@@ -17,6 +17,10 @@ def get_profile(request):
     if user:
         if list(history_data.values()):
             history = list(history_data.values())
+            for restaurant in history:
+                restaurant_data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
+                restaurant_detail = restaurant_data.values()
+                restaurant["name"] = restaurant_detail[0]["business_name"]
         else:
             history = "No history found"
         try:
