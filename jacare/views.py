@@ -183,22 +183,6 @@ def query_restaraurant(request):
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
 
 
-#Endpoint to retrieve specific restaraunt detail from db 
-@csrf_exempt
-def restaurant_detail(request, id): 
-    restaurant = Restaurant.objects.filter(id=id).first()
-    reviews = list(CustomerReviews.objects.filter(restaurant_id=id).all())
-    data = {
-        "reviews": reviews,
-        "id": id,
-        "place_id": restaurant.place_id,
-        "name": restaurant.business_name,
-    }
-    if restaurant:
-        return JsonResponse({"success": data}, status=200)
-    else:
-        return JsonResponse({"error": "no restaraunt found"}, status=500)
-
 #Endpoint for creating new review
 @api_view(["POST"])
 @csrf_exempt
