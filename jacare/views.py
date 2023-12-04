@@ -32,13 +32,14 @@ def register_user(request):
     body_unicode = request.body.decode('utf-8')
     body = json.loads(body_unicode)
     uid = body["uid"]
+    email = body["email"]
 
     user_exists = User.objects.filter(user_uid=uid).exists()
 
     if user_exists:
         return JsonResponse({"error": "User already registered"}, status=400)
     else:
-        new_user = User(user_uid=uid)
+        new_user = User(user_uid=uid, email=email)
         new_user.save()
         return JsonResponse({"success": "User registered successfully"}, status=201)
     
