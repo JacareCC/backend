@@ -7,6 +7,7 @@ class User(models.Model):
     birthday = models.DateField(null=True)
     level = models.IntegerField(null=True)
     date_joined = models.DateField(auto_now_add=True)
+    email = models.EmailField(null=True)
 
 class UserTier(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)

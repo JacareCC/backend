@@ -5,41 +5,42 @@ from user.models import User, VisitedHistory, UserTier, Points
 from business.models import Restaurant, TierReward
 from rest_framework.decorators import api_view
 # Create your views here.
-
-#Endpoint to retrieve visited history 
+    
+#Endpoint for getting a user's profile
 @csrf_exempt
-def user_history(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+def get_profile(request):
+    uid = request.headers.get("Authorization", "").split("Bearer ")[-1]
     user = User.objects.filter(user_uid=uid).first()
-    data = VisitedHistory.objects.filter(user_id=user).all()
-    history = list(data.values())
-    if history:
-        for restaurant in history:
-            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
-            restaurant_detail = data.values()
-            restaurant["name"] = restaurant_detail[0]["business_name"]
-        return JsonResponse({"success": history}, status=200)
+    history_data = VisitedHistory.objects.filter(user_id=user).all()
+    business_data = Restaurant.objects.filter(owner_user_id=user).all()
+    
+    if user:
+        if list(history_data.values()):
+            history = list(history_data.values())
+        else:
+            history = "No history found"
+        try:
+            points = Points.objects.get(user_id=user)
+        except Points.DoesNotExist:
+            points = "No points found"
+        if list(business_data.values()):
+            business = list(business_data.values())
+        else:
+            business = "No businesses registered"
+    
+        return JsonResponse({"success": {
+            "user": {
+                "username": user.user_name,
+                "email": user.email,
+                "birthday": user.birthday,
+            },
+            "business": business,
+            "history": history,
+            "points": points
+        }}, status=200)
     else:
-        return JsonResponse({"error": "no history found "}, status=200)
+        JsonResponse({"error": "No user found"})
 
-#Endpoint to add to visited history
-@api_view(['POST'])
-@csrf_exempt
-def add_to_user_history(request):  
-    body = request.data
-    restaurant_id = body.get('restaurant_id', None)
-    user_uid = body.get('uid', None)
-
-    user = User.objects.filter(user_uid=user_uid).first()
-    restaurant = Restaurant.objects.filter(id=restaurant_id).first()
-    
-    if user: 
-        new_history = VisitedHistory(restaurant_id=restaurant, user_id=user)
-        new_history.save()
-        return HttpResponse("success", status=201)
-    else: 
-        return JsonResponse({"error": "failed to save history"}, status=500)
-    
 #Endpoint for getting user favorites
 @csrf_exempt
 def get_user_saved_restaurants(request):

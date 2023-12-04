@@ -1,8 +1,9 @@
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 from rest_framework.decorators import api_view
 from .models import CustomerReviews
-from user.models import User, Points, UserTier
+from user.models import User, Points, UserTier, VisitedHistory
 from business.models import Restaurant, TierReward
 import requests
 import os 
@@ -31,15 +32,39 @@ def register_user(request):
     body_unicode = request.body.decode('utf-8')
     body = json.loads(body_unicode)
     uid = body["uid"]
+    email = body["email"]
 
     user_exists = User.objects.filter(user_uid=uid).exists()
 
     if user_exists:
         return JsonResponse({"error": "User already registered"}, status=400)
     else:
-        new_user = User(user_uid=uid)
+        new_user = User(user_uid=uid, email=email)
         new_user.save()
         return JsonResponse({"success": "User registered successfully"}, status=201)
+    
+#This is a helper function to format result data 
+def format_data(restaurant_list, user):
+    for restaurant in restaurant_list:
+        place_id = restaurant.get("id")
+        existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
+        if existing_restaurant:
+            restaurant["id"] = existing_restaurant.id
+            restaurant["place_id"] = existing_restaurant.place_id
+            tier_data = TierReward.objects.filter(restaurant_id=existing_restaurant).all()
+            tier_array = list(tier_data.values())
+            restaurant["tiers"] = tier_array 
+            new_history = VisitedHistory(restaurant_id=existing_restaurant, user_id=user)
+            new_history.save()
+            continue
+        else:
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+            new_restaurant.save()
+            restaurant["place_id"] = new_restaurant.place_id
+            restaurant["id"] = new_restaurant.id
+            new_history = VisitedHistory(restaurant_id=new_restaurant, user_id=user)
+            new_history.save()
+    return restaurant_list
 
 #This is a helper function to filter returned restaraunts from google
 def filter_data(places, user_price, open_now=False):
@@ -90,16 +115,6 @@ def weight_data(restaurant_list, max_result_count):
             weight += existing_restaurant.retaurant_level * .1
         weight_array.append(weight)
 
-        if existing_restaurant:
-            restaurant["id"] = existing_restaurant.id
-            restaurant["place_id"] = existing_restaurant.place_id
-            continue
-        else:
-            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
-            new_restaurant.save()
-            restaurant["place_id"] = new_restaurant.place_id
-            restaurant["id"] = new_restaurant.id
-
     for weight in weight_array:
         new_weight = weight * random.randint(1,100)
         random_array_with_weight.append(new_weight)
@@ -122,6 +137,8 @@ def query_restaraurant(request):
     distance = body.get("distanceToTravel", 500)
     openNow = body.get("openNow", None)
     max_result_count = body.get("amountOfOptions", None)
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    user = User.objects.filter(user_uid=uid).first()
 
     location_restriction = { 
             "circle": {
@@ -150,7 +167,7 @@ def query_restaraurant(request):
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
-        while len(filtered_results) < max_result_count:
+        while len(filtered_results) < max_result_count and distance < 50000:
             distance *= 2
             location_restriction["circle"]["radius"] = distance
             response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=json_data, headers=headers)
@@ -159,27 +176,12 @@ def query_restaraurant(request):
           
             
         weighted_results = weight_data(filtered_results, max_result_count)
-
-        return JsonResponse({"result": weighted_results}, status=200)
+        formatted_results = format_data(weighted_results, user)
+        
+        return JsonResponse({"result": formatted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
 
-
-#Endpoint to retrieve specific restaraunt detail from db 
-@csrf_exempt
-def restaurant_detail(request, id): 
-    restaurant = Restaurant.objects.filter(id=id).first()
-    reviews = list(CustomerReviews.objects.filter(restaurant_id=id).all())
-    data = {
-        "reviews": reviews,
-        "id": id,
-        "place_id": restaurant.place_id,
-        "name": restaurant.business_name,
-    }
-    if restaurant:
-        return JsonResponse({"success": data}, status=200)
-    else:
-        return JsonResponse({"error": "no restaraunt found"}, status=500)
 
 #Endpoint for creating new review
 @api_view(["POST"])
