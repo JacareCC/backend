@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg
 from rest_framework.decorators import api_view
 from .models import CustomerReviews
-from user.models import User, Points, UserTier
+from user.models import User, Points, UserTier, VisitedHistory
 from business.models import Restaurant, TierReward
 import requests
 import os 
@@ -43,7 +43,7 @@ def register_user(request):
         return JsonResponse({"success": "User registered successfully"}, status=201)
     
 #This is a helper function to format result data 
-def format_data(restaurant_list):
+def format_data(restaurant_list, user):
     for restaurant in restaurant_list:
         place_id = restaurant.get("id")
         existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
@@ -52,13 +52,17 @@ def format_data(restaurant_list):
             restaurant["place_id"] = existing_restaurant.place_id
             tier_data = TierReward.objects.filter(restaurant_id=existing_restaurant).all()
             tier_array = list(tier_data.values())
-            restaurant["tiers"] = tier_array
+            restaurant["tiers"] = tier_array 
+            new_history = VisitedHistory(restaurant_id=existing_restaurant, user_id=user)
+            new_history.save()
             continue
         else:
             new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
             new_restaurant.save()
             restaurant["place_id"] = new_restaurant.place_id
             restaurant["id"] = new_restaurant.id
+            new_history = VisitedHistory(restaurant_id=new_restaurant, user_id=user)
+            new_history.save()
     return restaurant_list
 
 #This is a helper function to filter returned restaraunts from google
@@ -132,6 +136,8 @@ def query_restaraurant(request):
     distance = body.get("distanceToTravel", 500)
     openNow = body.get("openNow", None)
     max_result_count = body.get("amountOfOptions", None)
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    user = User.objects.filter(user_uid=uid).first()
 
     location_restriction = { 
             "circle": {
@@ -169,7 +175,7 @@ def query_restaraurant(request):
           
             
         weighted_results = weight_data(filtered_results, max_result_count)
-        formatted_results = format_data(weighted_results)
+        formatted_results = format_data(weighted_results, user)
         
         return JsonResponse({"result": formatted_results}, status=200)
     else:
