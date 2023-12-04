@@ -9,8 +9,7 @@ from rest_framework.decorators import api_view
 #Endpoint for getting a user's profile
 @csrf_exempt
 def get_profile(request):
-    # uid = request.headers.get("Authorization", "").split("Bearer ")[-1]
-    uid = request.headers.get("uid")
+    uid = request.headers.get("Authorization", "").split("Bearer ")[-1]
     user = User.objects.filter(user_uid=uid).first()
     history_data = VisitedHistory.objects.filter(user_id=user).all()
     business_data = Restaurant.objects.filter(owner_user_id=user).all()
