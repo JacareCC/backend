@@ -92,10 +92,12 @@ def weight_data(restaurant_list, max_result_count):
 
         if existing_restaurant:
             restaurant["id"] = existing_restaurant.id
+            restaurant["place_id"] = existing_restaurant.place_id
             continue
         else:
             new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
             new_restaurant.save()
+            restaurant["place_id"] = new_restaurant.place_id
             restaurant["id"] = new_restaurant.id
 
     for weight in weight_array:
@@ -158,7 +160,6 @@ def query_restaraurant(request):
             
         weighted_results = weight_data(filtered_results, max_result_count)
 
-        
         return JsonResponse({"result": weighted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
