@@ -20,7 +20,7 @@ def user_history(request):
             restaurant["name"] = restaurant_detail[0]["business_name"]
         return JsonResponse({"success": history}, status=200)
     else:
-        return JsonResponse({"error": "no history found "}, status=500)
+        return JsonResponse({"error": "no history found "}, status=200)
 
 #Endpoint to add to visited history
 @api_view(['POST'])
