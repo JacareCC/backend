@@ -93,6 +93,9 @@ def weight_data(restaurant_list, max_result_count):
         if existing_restaurant:
             restaurant["id"] = existing_restaurant.id
             restaurant["place_id"] = existing_restaurant.place_id
+            tier_data = TierReward.objects.filter(restaurant_id=existing_restaurant).all()
+            tier_array = list(tier_data.values())
+            restaurant["tiers"] = tier_array
             continue
         else:
             new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
@@ -150,7 +153,7 @@ def query_restaraurant(request):
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)
-        while len(filtered_results) < max_result_count:
+        while len(filtered_results) < max_result_count and distance < 50000:
             distance *= 2
             location_restriction["circle"]["radius"] = distance
             response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=json_data, headers=headers)
