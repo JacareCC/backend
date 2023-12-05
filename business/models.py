@@ -9,7 +9,7 @@ class Restaurant(models.Model):
     contact_person = models.CharField(max_length=200, null=True)
     retaurant_level = models.IntegerField(null=True)
     address = models.CharField(max_length=200, null=True)
-    claimed = models.BooleanField()
+    claimed = models.BooleanField(default=False)
     owner_user_id = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self):
         return self.business_name
