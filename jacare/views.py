@@ -20,9 +20,9 @@ def login_user(request):
     user = User.objects.filter(user_uid=uid).exists()
     
     if user:
-        return JsonResponse({"success": "Logged in"}, status=200)
+        return HttpResponse("Login successful", status=200)
     else: 
-        return JsonResponse({"Error": "Please register before logging in"}, status=401)
+        return HttpResponse("Authentication required", status=401)
     
 
 #Endpoint for registering users 
