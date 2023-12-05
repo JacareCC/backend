@@ -30,18 +30,36 @@ def new_registration_request(request):
     else: 
         return JsonResponse({"error": "failed to create registration request"}, status=500)
     
-#Endpoint for businsses to view all their reviews
+#Endpoint for businsses profile
 @csrf_exempt
-def get_reviews(request):
+def get_business(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
     user = User.objects.filter(user_uid=uid).first()
     restaurant = Restaurant.objects.filter(owner_user_id=user).first()
-    data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
-    reviews = list(data.values())
-    if reviews:
-        return JsonResponse({"success": reviews}, status=200)
+    if restaurant:
+        review_data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
+        rewards_data = TierReward.objects.filter(restaurant_id=restaurant).all()
+        if review_data:
+            reviews = list(review_data.values())
+        else:
+            reviews = "No reviews found"
+        if rewards_data:
+            rewards = list(rewards_data.values())
+        else: 
+            rewards = "No rewards found"
+
+        return JsonResponse({"success": {
+            "name": restaurant.business_name,
+            "email": restaurant.email,
+            "phoneNumber": restaurant.phone_number,
+            "representative": restaurant.contact_person,
+            "address": restaurant.address,
+            "rewardsSettings": rewards,
+            "reviews": reviews
+        }}, status=200)
     else:
-        return JsonResponse({"error": "failed to get reviews"}, status=500)
+        return JsonResponse({"error": "No business found"})
+            
 
 #Endpoint for verifying reviews
 @api_view(["PATCH"])
