@@ -51,8 +51,7 @@ def get_profile(request):
 def update_user(request):
     if request.method == 'PATCH':
         body = request.data
-        # uid = request.headers("Authorization", "").split("Bearer ")[-1]
-        uid = request.headers.get("uid")
+        uid = request.headers.get("Authorization", "").split("Bearer ")[-1]
         user = User.objects.filter(user_uid=uid).first()
         if user:
             user.user_name = body.get("username", user.user_name)
