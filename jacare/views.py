@@ -156,7 +156,7 @@ def query_restaraurant(request):
     json_data = {
         "includedTypes": cuisine_options,
         "locationRestriction": location_restriction,
-        "excludedPrimaryTypes": ["hotel", "resort_hotel", "department_store"]
+        "excludedPrimaryTypes": ["hotel", "resort_hotel", "department_store", "bar", "fast_food_restaurant", "coffee_shop", "ice_cream_shop"]
     }
 
     headers = {
