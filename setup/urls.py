@@ -1,18 +1,14 @@
 from django.contrib import admin
-from django.urls import path
-from jacare.views import login_user, register_user, query_restaraurant, restaurant_detail, user_history, add_to_user_history, new_review, change_user_saved_restaurants, get_user_saved_restaurants, new_claim_request 
+from django.urls import path, include
+from jacare.views import query_restaraurant, new_review, purchase_tier, login_user, register_user
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('login/', login_user),
     path('register/', register_user),
+    path('admin/', admin.site.urls),
     path('search/', query_restaraurant),
-    path('restaurant/<int:id>/', restaurant_detail),
-    path('user/history/', user_history),
-    path('user/history/add/', add_to_user_history),
-    path('submitreview/', new_review),
-    path('user/favorites/', get_user_saved_restaurants),
-    path('user/favorites/add/', change_user_saved_restaurants),
-    path('user/favorites/remove/', change_user_saved_restaurants),
-    path('business/claim', new_claim_request)
+    path('review/new/', new_review),
+    path('tier/purchase/', purchase_tier),
+    path('user/', include('user.urls')),
+    path('business/', include('business.urls'))
 ]
