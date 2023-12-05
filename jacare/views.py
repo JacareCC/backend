@@ -118,8 +118,11 @@ def weight_data(restaurant_list, max_result_count):
     for weight in weight_array:
         new_weight = weight * random.randint(1,100)
         random_array_with_weight.append(new_weight)
-      
-    index_of_weights = sorted(range(len(random_array_with_weight)), key=lambda i: random_array_with_weight[i], reverse=True)[:max_result_count]
+
+    if len(restaurant_list) < max_result_count:  
+        index_of_weights = sorted(range(len(random_array_with_weight)), key=lambda i: random_array_with_weight[i], reverse=True)[:len(restaurant_list)]
+    else:
+        index_of_weights = sorted(range(len(random_array_with_weight)), key=lambda i: random_array_with_weight[i], reverse=True)[:max_result_count]    
       
     for index in index_of_weights:
         results_for_fe.append(restaurant_list[index])
@@ -175,7 +178,7 @@ def query_restaraurant(request):
             filtered_results = filter_data(data.get('places', []), price, openNow)
           
             
-        weighted_results = weight_data(filtered_results, max_result_count or len(filtered_results))
+        weighted_results = weight_data(filtered_results, max_result_count)
         formatted_results = format_data(weighted_results, user)
         
         return JsonResponse({"result": formatted_results}, status=200)
