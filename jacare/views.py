@@ -30,12 +30,14 @@ def login_user(request):
 @csrf_exempt
 def register_user(request):
     body = request.data
-    uid = body.get("uid", "")
+    uid = body.get("uid", None)
     email = body.get("email", None) 
         
     user_exists = User.objects.filter(user_uid=uid).exists()
     email_exists = User.objects.filter(email=email).exists()
 
+    if not uid:
+        return JsonResponse({"error": "No uid found"}, status=400)
     if user_exists:
         return JsonResponse({"error": "User already registered"}, status=400)
     if email_exists:
