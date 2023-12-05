@@ -5,6 +5,15 @@
 
 # BASE_URL = 'http://localhost:8000/user/'
 
+import pytest
+
+pytestmark = pytest.mark.django_db
+
+# class TestUserViews:
+#     def test_str_method(self, user_factory):
+#         user = user_factory()
+#         assert user.email == "test@test.com"
+
 
 # # #history function tests
 
