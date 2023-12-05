@@ -175,7 +175,7 @@ def query_restaraurant(request):
             filtered_results = filter_data(data.get('places', []), price, openNow)
           
             
-        weighted_results = weight_data(filtered_results, max_result_count)
+        weighted_results = weight_data(filtered_results, max_result_count or len(filtered_results))
         formatted_results = format_data(weighted_results, user)
         
         return JsonResponse({"result": formatted_results}, status=200)
