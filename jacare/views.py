@@ -34,9 +34,12 @@ def register_user(request):
     email = body.get("email", None) 
         
     user_exists = User.objects.filter(user_uid=uid).exists()
+    email_exists = User.objects.filter(email=email).exists()
 
     if user_exists:
         return JsonResponse({"error": "User already registered"}, status=400)
+    if email_exists:
+        return JsonResponse({"error": "Email already registered"}, status=400)
     else:
         new_user = User(user_uid=uid, email=email)
         new_user.save()
