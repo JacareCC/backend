@@ -1,6 +1,5 @@
 import factory
 from user.models import User, UserTier, Points, VisitedHistory
-from business.tests.factories import RestaurantFactory
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -15,7 +14,7 @@ class VisitedHistoryFactory(factory.django.DjangoModelFactory):
         model = VisitedHistory
     
     user_id = factory.SubFactory(UserFactory)
-    restaurant_id = factory.SubFactory(RestaurantFactory)
+    restaurant_id = factory.SubFactory("business.tests.factories.RestaurantFactory")
 
 
 
