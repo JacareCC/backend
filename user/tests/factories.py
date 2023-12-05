@@ -5,9 +5,11 @@ class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
 
-    user_uid = "test_uid"
+    user_uid = factory.Sequence(lambda n: "test_%d" % n)
     email = "test@test.com"
     birthday = birthday = factory.Faker('date_of_birth')
+
+    _ITERATOR_VALUE = 1 
 
 class VisitedHistoryFactory(factory.django.DjangoModelFactory):
     class Meta:
