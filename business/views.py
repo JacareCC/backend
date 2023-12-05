@@ -35,30 +35,28 @@ def new_registration_request(request):
 def get_business(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
     user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
-    if restaurant:
-        review_data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
-        rewards_data = TierReward.objects.filter(restaurant_id=restaurant).all()
-        if review_data:
-            reviews = list(review_data.values())
-        else:
-            reviews = "No reviews found"
-        if rewards_data:
-            rewards = list(rewards_data.values())
-        else: 
-            rewards = "No rewards found"
+    restaurant_data = Restaurant.objects.filter(owner_user_id=user).all()
+    if restaurant_data:
+        for restaurant in restaurant_data:
+            review_data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
+            rewards_data = TierReward.objects.filter(restaurant_id=restaurant).all()
 
-        return JsonResponse({"success": {
-            "name": restaurant.business_name,
-            "email": restaurant.email,
-            "phoneNumber": restaurant.phone_number,
-            "representative": restaurant.contact_person,
-            "address": restaurant.address,
-            "rewardsSettings": rewards,
-            "reviews": reviews
-        }}, status=200)
+        restaurant_list = list(restaurant_data.values())
+        for restaurant in restaurant_list:
+            if review_data:
+                reviews = list(review_data.values())
+            else:
+                reviews = "No reviews found"
+            if rewards_data:
+                rewards = list(rewards_data.values())
+            else: 
+                rewards = "No rewards found"
+
+            restaurant["reviews"] = reviews
+            restaurant["rewards"] = rewards
+        return JsonResponse({"success": restaurant_list})
     else:
-        return JsonResponse({"error": "No business found"})
+        return JsonResponse({"error": "No business found"}, status=404)
             
 
 #Endpoint for verifying reviews
