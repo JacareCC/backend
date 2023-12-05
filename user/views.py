@@ -45,6 +45,25 @@ def get_profile(request):
     else:
         JsonResponse({"error": "No user found"})
 
+#Endpoint for updating user's profile
+@api_view(["PATCH"])
+@csrf_exempt
+def update_user(request):
+    if request.method == 'PATCH':
+        body = request.data
+        # uid = request.headers("Authorization", "").split("Bearer ")[-1]
+        uid = request.headers.get("uid")
+        user = User.objects.filter(user_uid=uid).first()
+        if user:
+            user.user_name = body.get("username", user.user_name)
+            user.birthday = body.get("birthday", user.birthday)
+            user.email = body.get("email", user.email)
+            user.save()
+
+        return JsonResponse({'message': 'User updated'}, status=200)
+    else:
+        return JsonResponse({"message" : "Could not find user"}, status=404)
+
 #Endpoint for getting user favorites
 @csrf_exempt
 def get_user_saved_restaurants(request):
