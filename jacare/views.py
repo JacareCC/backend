@@ -29,11 +29,10 @@ def login_user(request):
 @api_view(['POST'])
 @csrf_exempt
 def register_user(request):
-    body_unicode = request.body.decode('utf-8')
-    body = json.loads(body_unicode)
-    uid = body["uid"]
-    email = body["email"]
-
+    body = request.data
+    uid = body.get("uid", "")
+    email = body.get("email", None) 
+        
     user_exists = User.objects.filter(user_uid=uid).exists()
 
     if user_exists:
