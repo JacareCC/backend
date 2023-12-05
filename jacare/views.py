@@ -136,26 +136,50 @@ def weight_data(restaurant_list, max_result_count):
 @api_view(['POST'])
 @csrf_exempt
 def query_restaraurant(request):
-
-    body = request.data
+    body = request.data if request.data else None
+    if not body:
+        return JsonResponse({"error": "Search parameters not found"}, status=400)
+    
     cuisine_options = body.get("cuisineOptions", None)
     location = body.get("location", None)
     price = body.get("price", None)
     distance = body.get("distanceToTravel", 500)
     openNow = body.get("openNow", None)
     max_result_count = body.get("amountOfOptions", None)
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    uid = request.headers.get("Authorization", None).split('Bearer ')[-1] 
+
+    if not uid:
+        return JsonResponse({"error": "uid not found"}, status=400)
+    
     user = User.objects.filter(user_uid=uid).first()
 
-    location_restriction = { 
-            "circle": {
-                "center": {
-                    "latitude": location["latitude"],
-                    "longitude": location["longitude"],
-                },
-            "radius": distance
-        }   
-    }
+    if not cuisine_options:
+        return JsonResponse({"error": "cuisineOptions not found"}, status=400)
+    
+    if type(price) is not int:
+        return JsonResponse({"error": "price not found"}, status=400)
+    
+    if price < 0 or price > 4:
+        return JsonResponse({"error": "price is out of range"}, status=400)
+
+    if not max_result_count:
+        return JsonResponse({"error": "amountOfOptions not found"}, status=400)
+    
+    if location:
+        if type(location["longitude"]) is float and type(location["latitude"]) is float:
+            location_restriction = { 
+                "circle": {
+                    "center": {
+                        "latitude": location["latitude"],
+                        "longitude": location["longitude"],
+                    },
+                "radius": distance
+                }   
+            }
+        else:
+            return JsonResponse({"error": "Invalid location"}, status=400)
+    else:
+        return JsonResponse({"error": "Location not found"}, status=400)
 
     json_data = {
         "includedTypes": cuisine_options,
