@@ -37,23 +37,19 @@ def get_business(request):
     user = User.objects.filter(user_uid=uid).first()
     restaurant_data = Restaurant.objects.filter(owner_user_id=user).all()
     if restaurant_data:
-        for restaurant in restaurant_data:
-            review_data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
-            rewards_data = TierReward.objects.filter(restaurant_id=restaurant).all()
-
         restaurant_list = list(restaurant_data.values())
         for restaurant in restaurant_list:
-            if review_data:
-                reviews = list(review_data.values())
+            reviews = CustomerReviews.objects.filter(restaurant_id=restaurant["id"]).all()
+            rewards = TierReward.objects.filter(restaurant_id=restaurant["id"]).all()
+            if reviews:
+                restaurant["reviews"] = list(reviews.values())
             else:
-                reviews = "No reviews found"
-            if rewards_data:
-                rewards = list(rewards_data.values())
+                restaurant["review"] = "No reviews found"
+            if rewards:
+                restaurant["rewards"] = list(rewards.values())
             else: 
-                rewards = "No rewards found"
+                restaurant["rewards"] = "No rewards found"
 
-            restaurant["reviews"] = reviews
-            restaurant["rewards"] = rewards
         return JsonResponse({"success": restaurant_list})
     else:
         return JsonResponse({"error": "No business found"}, status=404)
@@ -98,9 +94,10 @@ def get_all_tiers(request):
 @csrf_exempt
 def new_tier_level(request):
     body = request.data
-    uid = body.get("uid", None)
-    user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
+    id = body.get("id", None)
+    restaurant_id = body.get("restaurant_id", None)
+    user = User.objects.filter(id=id).first()
+    restaurant = Restaurant.objects.filter(owner_user_id=user, id=restaurant_id).first()
 
     if restaurant:
         reward_level = body.get("tier", None)
