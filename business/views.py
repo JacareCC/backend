@@ -39,7 +39,6 @@ def get_business(request):
     if restaurant_data:
         restaurant_list = list(restaurant_data.values())
         for restaurant in restaurant_list:
-            print(restaurant)
             reviews = CustomerReviews.objects.filter(restaurant_id=restaurant["id"]).all()
             rewards = TierReward.objects.filter(restaurant_id=restaurant["id"]).all()
             if reviews:
@@ -95,9 +94,10 @@ def get_all_tiers(request):
 @csrf_exempt
 def new_tier_level(request):
     body = request.data
-    uid = body.get("uid", None)
-    user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
+    id = body.get("id", None)
+    restaurant_id = body.get("restaurant_id", None)
+    user = User.objects.filter(id=id).first()
+    restaurant = Restaurant.objects.filter(owner_user_id=user, id=restaurant_id).first()
 
     if restaurant:
         reward_level = body.get("tier", None)
