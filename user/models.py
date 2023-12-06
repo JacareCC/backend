@@ -9,6 +9,9 @@ class User(models.Model):
     date_joined = models.DateField(auto_now_add=True)
     email = models.EmailField(null=True)
 
+    def __str__(self):
+        return self.email
+
 class UserTier(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     restaurant_id = models.ForeignKey('business.Restaurant', on_delete=models.CASCADE)
