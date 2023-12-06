@@ -67,14 +67,15 @@ def update_user(request):
 #Endpoint for getting user favorites
 @csrf_exempt
 def get_user_saved_restaurants(request):
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
-    user = User.objects.filter(user_uid=uid).exists()
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
+    user = User.objects.filter(user_uid=uid).first()
     data = VisitedHistory.objects.filter(user_id=user, saved=True).all()
     saved_restaurants = list(data.values())
     if saved_restaurants:
         for restaurant in saved_restaurants:
-            data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
-            restaurant_detail = data.values()
+            restaurant_data = Restaurant.objects.filter(id=restaurant["restaurant_id_id"])
+            restaurant_detail = restaurant_data.values()
+            restaurant["googlePlaceId"] = restaurant_detail[0]["place_id"]
             restaurant["name"] = restaurant_detail[0]["business_name"]
         return JsonResponse({"message": saved_restaurants})
     else:
@@ -87,19 +88,20 @@ def change_user_saved_restaurants(request):
     if request.method == 'PATCH':
         body = request.data
         uid = body.get("uid", None)
-        id = body.get("id", None)
-        user = User.objects.filter(user_uid=uid).exists()
+        id = body.get('id', None)
+        user = User.objects.filter(user_uid=uid).first()
         restaurant_id = body.get("restaurantId", None)
-        if user and restaurant_id:
-            data = VisitedHistory.objects.filter(id=id, user_id=user, restaurant_id=restaurant_id)
+        restaurant = Restaurant.objects.filter(id=restaurant_id).first()
+        if user and restaurant:
+            data = VisitedHistory.objects.filter(id=id, user_id=user, restaurant_id=restaurant).first()
             if data:
-                data_to_update = data.first()
-                data_to_update.saved = not data_to_update.saved
-                data_to_update.save()
-
-        return JsonResponse({'message': 'Restaurant removed from saved'}, status=200)
-    else:
-        return JsonResponse({"message" : "could not find user or restaurant"}, status=404)
+                data.saved = not data.saved
+                message = "saved" if data.saved else "unsaved"
+                data.save()
+                return JsonResponse({'message': f'Restaurant {message}'}, status=200)
+            return JsonResponse({"message" : "could not find restaurant in history"}, status=404)
+        else:
+            return JsonResponse({"message" : "could not find user or restaurant"}, status=404)
     
 
 #Endpoint for user getting all their tiers
