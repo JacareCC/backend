@@ -119,7 +119,7 @@ def edit_tier(request, id):
         if tier:
             tier.reward_level = body.get("tier", tier.reward_level)
             tier.reward_description = body.get("description", tier.reward_description)
-            tier.points_required = body.get("cost", tier.points_required)
+            tier.points_required = body.get("points", tier.points_required)
             tier.save()
         return JsonResponse({'success': 'tier edited'}, status=200, safe=False)
     else:
