@@ -1,9 +1,9 @@
-from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from user.models import User, VisitedHistory, UserTier, Points
 from business.models import Restaurant, TierReward
 from rest_framework.decorators import api_view
+from django.core.serializers import serialize
 # Create your views here.
     
 #Endpoint for getting a user's profile
@@ -24,7 +24,8 @@ def get_profile(request):
         else:
             history = "No history found"
         try:
-            points = Points.objects.get(user_id=user)
+            points_data = Points.objects.get(user_id=user)
+            points = points_data.value if points_data else None
         except Points.DoesNotExist:
             points = "No points found"
         if list(business_data.values()):
