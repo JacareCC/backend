@@ -156,7 +156,7 @@ def query_restaraurant(request):
     json_data = {
         "includedTypes": cuisine_options,
         "locationRestriction": location_restriction,
-        "excludedPrimaryTypes": ["hotel", "resort_hotel", "department_store"]
+        "excludedPrimaryTypes": ["hotel", "resort_hotel", "department_store", "bar", "fast_food_restaurant", "coffee_shop", "ice_cream_shop"]
     }
 
     headers = {
@@ -199,7 +199,7 @@ def new_review(request):
     if restaurant and user:
         new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
         new_review_made.save()
-        user_points_exists = Points.objects(user_id=user).exists()
+        user_points_exists = Points.objects.filter(user_id=user).exists()
         if user_points_exists:
             user_points = Points.objects.filter(user_id=user).first()
             user_points.value += 1

@@ -30,18 +30,30 @@ def new_registration_request(request):
     else: 
         return JsonResponse({"error": "failed to create registration request"}, status=500)
     
-#Endpoint for businsses to view all their reviews
+#Endpoint for businsses profile
 @csrf_exempt
-def get_reviews(request):
+def get_business(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
     user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
-    data = CustomerReviews.objects.filter(restaurant_id=restaurant).all()
-    reviews = list(data.values())
-    if reviews:
-        return JsonResponse({"success": reviews}, status=200)
+    restaurant_data = Restaurant.objects.filter(owner_user_id=user).all()
+    if restaurant_data:
+        restaurant_list = list(restaurant_data.values())
+        for restaurant in restaurant_list:
+            reviews = CustomerReviews.objects.filter(restaurant_id=restaurant["id"]).all()
+            rewards = TierReward.objects.filter(restaurant_id=restaurant["id"]).all()
+            if reviews:
+                restaurant["reviews"] = list(reviews.values())
+            else:
+                restaurant["review"] = "No reviews found"
+            if rewards:
+                restaurant["rewards"] = list(rewards.values())
+            else: 
+                restaurant["rewards"] = "No rewards found"
+
+        return JsonResponse({"success": restaurant_list})
     else:
-        return JsonResponse({"error": "failed to get reviews"}, status=500)
+        return JsonResponse({"error": "No business found"}, status=404)
+            
 
 #Endpoint for verifying reviews
 @api_view(["PATCH"])
@@ -82,9 +94,10 @@ def get_all_tiers(request):
 @csrf_exempt
 def new_tier_level(request):
     body = request.data
-    uid = body.get("uid", None)
-    user = User.objects.filter(user_uid=uid).first()
-    restaurant = Restaurant.objects.filter(owner_user_id=user).first()
+    id = body.get("id", None)
+    restaurant_id = body.get("restaurant_id", None)
+    user = User.objects.filter(id=id).first()
+    restaurant = Restaurant.objects.filter(owner_user_id=user, id=restaurant_id).first()
 
     if restaurant:
         reward_level = body.get("tier", None)
