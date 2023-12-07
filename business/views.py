@@ -109,7 +109,7 @@ def hide_review(request):
             review.save()
         return JsonResponse({'success': f'{message}'}, status=200, safe=False)
     else:
-        return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
+        return JsonResponse({"error" : "failed to execute"}, status=404, safe=False)
 
 
 #Endpoint for restaurant owners getting all tiers for their restaurant 
