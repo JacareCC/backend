@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework.decorators import api_view
 from user.models import User, Points
 from business.models import RegistrationRequests, Restaurant, TierReward
@@ -30,7 +32,7 @@ def new_registration_request(request):
     else: 
         return JsonResponse({"error": "failed to create registration request"}, status=500)
     
-#Endpoint for businsses profile
+#Endpoint for getting a user's businsses profile
 @csrf_exempt
 def get_business(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
@@ -53,7 +55,26 @@ def get_business(request):
         return JsonResponse({"success": restaurant_list})
     else:
         return JsonResponse({"error": "No business found"}, status=404)
-            
+
+#Endpoint for specific business page
+@csrf_exempt
+def get_specific_business(request, id):
+    business_id = id
+    try:
+        business = Restaurant.objects.get(id=business_id)
+        try:
+            business_tiers_data = TierReward.objects.filter(restaurant_id=business).all()
+            business_tiers = list(business_tiers_data.values())
+            rewards = business_tiers if business_tiers else "no rewards found"
+            return JsonResponse({"success": {
+                "name": business.business_name,
+                "placeId": business.place_id,
+                "rewards": rewards,
+            }}, status=200)
+        except TierReward.DoesNotExist:
+            return JsonResponse({"error": "rewards not found"}, status=404)
+    except Restaurant.DoesNotExist:
+        return JsonResponse({"error": "could not find business"}, status=404)
 
 #Endpoint for verifying reviews
 @api_view(["PATCH"])
@@ -103,7 +124,9 @@ def new_tier_level(request):
         reward_level = body.get("tier", None)
         reward_description = body.get("description", None)
         points_required = body.get("points", None)
-        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant)
+        refresh_in_days = body.get("refresh", None)
+        refresh_date = timezone.now() + timedelta(days=refresh_in_days)
+        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant, refreshes_in=refresh_date)
         tier.save()
         return JsonResponse({"success": "tier created"}, status=201)
     else: 
