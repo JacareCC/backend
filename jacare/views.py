@@ -41,6 +41,8 @@ def register_user(request):
     else:
         new_user = User(user_uid=uid, email=email)
         new_user.save()
+        points = Points(user_id=new_user, value=0)
+        points.save()
         return JsonResponse({"success": "User registered successfully"}, status=201)
     
 #This is a helper function to format result data 
@@ -223,7 +225,7 @@ def purchase_tier(request):
     user = User.objects.filter(user_uid=user_uid).first()
     tier = TierReward.objects.filter(id=tier_id).first()
     cost = tier.points_required
-    tier_exists = UserTier.objects.filter(user_id=user, tier_level=tier, restaurant_id=restaurant).exists()
+    tier_exists = UserTier.objects.filter(user_id=user, tier=tier, restaurant_id=restaurant).first()
 
     if not user:
         return JsonResponse({"error": "user not found"}, status=404)
@@ -231,14 +233,16 @@ def purchase_tier(request):
         return JsonResponse({"error": "restaurant not found"}, status=404)
     elif not tier:
         return JsonResponse({"error": "tier not found"}, status=404)
-    elif tier_exists:
-        return JsonResponse({"error": "user already has tier"}, status=404)
+    elif tier_exists and not tier_exists.has_refreshed():
+        return JsonResponse({"error": "reward has not refreshed yet"}, status=400)
     else:
         user_points = Points.objects.filter(user_id=user).first()
+        if not user_points:
+            return JsonResponse({"error": "no points found"}, status=404)
         if user_points.value < cost:
             return JsonResponse({"error": "not enough points"}, status=404)
         else: 
-            new_user_tier = UserTier(user_id=user, tier_level=tier, restaurant_id=restaurant)
+            new_user_tier = UserTier(user_id=user, tier=tier, restaurant_id=restaurant)
             new_user_tier.save()
             user_points.value -= cost
             user_points.save()

@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework.decorators import api_view
 from user.models import User, Points
 from business.models import RegistrationRequests, Restaurant, TierReward
@@ -122,7 +124,9 @@ def new_tier_level(request):
         reward_level = body.get("tier", None)
         reward_description = body.get("description", None)
         points_required = body.get("points", None)
-        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant)
+        refresh_in_days = body.get("refresh", None)
+        refresh_date = timezone.now() + timedelta(days=refresh_in_days)
+        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant, refreshes_in=refresh_date)
         tier.save()
         return JsonResponse({"success": "tier created"}, status=201)
     else: 

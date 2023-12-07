@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 class Restaurant(models.Model):
@@ -20,6 +21,7 @@ class TierReward(models.Model):
     reward_level = models.CharField()
     reward_description = models.TextField()
     points_required = models.IntegerField()
+    refreshes_in = models.DateTimeField(null=True)
 
 class RegistrationRequests(models.Model):
     class Meta:
