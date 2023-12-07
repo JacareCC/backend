@@ -95,6 +95,22 @@ def verify_review(request):
     else:
         return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
 
+#Endpoint for hiding and unhiding reviews
+@api_view(["PATCH"])
+@csrf_exempt
+def hide_review(request):
+    if request.method == 'PATCH':
+        body = request.data
+        id = body.get("id", None)
+        review = CustomerReviews.objects.filter(id=id).first()
+        if review:
+            review.isHidden = not review.isHidden
+            message = "Hidden" if review.isHidden else "Unhidden"
+            review.save()
+        return JsonResponse({'success': f'{message}'}, status=200, safe=False)
+    else:
+        return JsonResponse({"error" : "failed to verify"}, status=404, safe=False)
+
 
 #Endpoint for restaurant owners getting all tiers for their restaurant 
 @csrf_exempt
