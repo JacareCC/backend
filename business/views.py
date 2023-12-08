@@ -45,6 +45,7 @@ def get_business(request):
             rewards = TierReward.objects.filter(restaurant_id=restaurant["id"]).all()
             if reviews:
                 restaurant["reviews"] = list(reviews.values())
+                
             else:
                 restaurant["review"] = "No reviews found"
             if rewards:

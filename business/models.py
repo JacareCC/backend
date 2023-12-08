@@ -13,6 +13,7 @@ class Restaurant(models.Model):
     claimed = models.BooleanField()
     qr_code_link = models.CharField(max_length=255, null=True, default=None)
     owner_user_id = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True, blank=True)
+    location = models.JSONField(default=dict)
     def __str__(self):
         return self.business_name
     

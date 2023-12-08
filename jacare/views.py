@@ -57,7 +57,7 @@ def format_data(restaurant_list, user):
             tier_array = list(tier_data.values())
             restaurant["tiers"] = tier_array 
             new_history = VisitedHistory(restaurant_id=existing_restaurant, user_id=user)
-            new_history.save()
+            new_history.save()  
             restaurant_review_data = CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all()
             restaurant_review_list = list(restaurant_review_data.values())
             if restaurant_review_list:
@@ -94,9 +94,8 @@ def format_data(restaurant_list, user):
                 restaurant["value_for_price"] = None
                 restaurant["food_quality"] = None
                 restaurant["atmosphere"] = None
-            continue
         else:
-            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), location=restaurant.get("location", {}),claimed=False)
             new_restaurant.save()
             restaurant["place_id"] = new_restaurant.place_id
             restaurant["id"] = new_restaurant.id
