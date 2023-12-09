@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from datetime import timedelta
@@ -31,6 +31,21 @@ def new_registration_request(request):
         return JsonResponse({'message': 'Registration request created successfully'}, status=201)
     else: 
         return JsonResponse({"error": "failed to create registration request"}, status=500)
+
+#Endpoint for verifying whether a user is owner of the business on business pages
+@csrf_exempt
+def verify_user(request, id):
+    uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
+    user = User.objects.filter(user_uid=uid).first()
+    business = Restaurant.objects.filter(user_id=user, id=id).exists()
+    if business:
+        return HttpResponse("verified", status=200)
+    elif not business:
+        return JsonResponse({"error": "not verified"}, status=400)
+    elif not user:
+        return JsonResponse({"error": "user not found"}, status=400)
+
+
     
 #Endpoint for getting a user's businsses profile
 @csrf_exempt
