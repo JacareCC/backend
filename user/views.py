@@ -77,6 +77,7 @@ def get_user_saved_restaurants(request):
             restaurant_detail = restaurant_data.values()
             restaurant["googlePlaceId"] = restaurant_detail[0]["place_id"]
             restaurant["name"] = restaurant_detail[0]["business_name"]
+            restaurant["location"] = restaurant_detail[0]["location"]
         return JsonResponse({"message": saved_restaurants})
     else:
         return JsonResponse({"message": "No saved restaurants"})
