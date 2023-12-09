@@ -6,7 +6,7 @@ from business.views import new_registration_request, verify_review, get_business
 
 urlpatterns = [
     path('register/', new_registration_request),
-    path('user/verify/', verify_user),
+    path('user/verify/<int:id>', verify_user),
     path('review/verify/', verify_review),
     path('review/hide/', hide_review),
     path('profile/', get_business),
