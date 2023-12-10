@@ -45,6 +45,8 @@ def register_user(request):
     else:
         new_user = User(user_uid=uid, email=email)
         new_user.save()
+        points = Points(user_id=new_user, value=0)
+        points.save()
         return JsonResponse({"success": "User registered successfully"}, status=201)
     
 #This is a helper function to format result data 
@@ -59,10 +61,45 @@ def format_data(restaurant_list, user):
             tier_array = list(tier_data.values())
             restaurant["tiers"] = tier_array 
             new_history = VisitedHistory(restaurant_id=existing_restaurant, user_id=user)
-            new_history.save()
-            continue
+            new_history.save()  
+            restaurant_review_data = CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all()
+            restaurant_review_list = list(restaurant_review_data.values())
+            if restaurant_review_list:
+                accessibility = 0
+                customer_service = 0
+                value_for_price = 0
+                atmosphere = 0
+                food_quality = 0
+                for review in restaurant_review_list:
+                    review.accessibility += accessibility
+                    review.customer_service += customer_service
+                    review.value_for_price += value_for_price
+                    review.atmosphere += atmosphere
+                    review.food_quality += food_quality
+                num_reviews = len(restaurant_review_list)
+                accessibility /= num_reviews
+                customer_service /= num_reviews
+                value_for_price /= num_reviews
+                atmosphere /= num_reviews
+                food_quality /= num_reviews
+                accessibility_percentage = (accessibility / 5) * 100
+                customer_service_percentage = (customer_service / 5) * 100
+                value_for_price_percentage = (value_for_price / 5) * 100
+                atmosphere_percentage = (atmosphere / 5) * 100
+                food_quality_percentage = (food_quality / 5) * 100
+                restaurant["accessibility"] = accessibility_percentage
+                restaurant["customer_service"] = customer_service_percentage
+                restaurant["value_for_price"] = value_for_price_percentage
+                restaurant["food_quality"] = atmosphere_percentage
+                restaurant["atmosphere"] = food_quality_percentage
+            else:
+                restaurant["accessibility"] = None
+                restaurant["customer_service"] = None
+                restaurant["value_for_price"] = None
+                restaurant["food_quality"] = None
+                restaurant["atmosphere"] = None
         else:
-            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), claimed=False)
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), location=restaurant.get("location", {}),claimed=False)
             new_restaurant.save()
             restaurant["place_id"] = new_restaurant.place_id
             restaurant["id"] = new_restaurant.id
@@ -208,7 +245,6 @@ def query_restaraurant(request):
             
         weighted_results = weight_data(filtered_results, max_result_count)
         formatted_results = format_data(weighted_results, user)
-        
         return JsonResponse({"result": formatted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
@@ -251,7 +287,7 @@ def purchase_tier(request):
     user = User.objects.filter(user_uid=user_uid).first()
     tier = TierReward.objects.filter(id=tier_id).first()
     cost = tier.points_required
-    tier_exists = UserTier.objects.filter(user_id=user, tier_level=tier, restaurant_id=restaurant).exists()
+    tier_exists = UserTier.objects.filter(user_id=user, tier=tier, restaurant_id=restaurant).first()
 
     if not user:
         return JsonResponse({"error": "user not found"}, status=404)
@@ -259,14 +295,16 @@ def purchase_tier(request):
         return JsonResponse({"error": "restaurant not found"}, status=404)
     elif not tier:
         return JsonResponse({"error": "tier not found"}, status=404)
-    elif tier_exists:
-        return JsonResponse({"error": "user already has tier"}, status=404)
+    elif tier_exists and not tier_exists.has_refreshed():
+        return JsonResponse({"error": "reward has not refreshed yet"}, status=400)
     else:
         user_points = Points.objects.filter(user_id=user).first()
+        if not user_points:
+            return JsonResponse({"error": "no points found"}, status=404)
         if user_points.value < cost:
             return JsonResponse({"error": "not enough points"}, status=404)
         else: 
-            new_user_tier = UserTier(user_id=user, tier_level=tier, restaurant_id=restaurant)
+            new_user_tier = UserTier(user_id=user, tier=tier, restaurant_id=restaurant)
             new_user_tier.save()
             user_points.value -= cost
             user_points.save()

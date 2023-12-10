@@ -9,6 +9,8 @@ class CustomerReviews(models.Model):
     email = models.EmailField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     isVerified = models.BooleanField(default=False)
+    isHidden = models.BooleanField(default=False)
+
 
 
 

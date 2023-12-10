@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 class User(models.Model):
@@ -17,8 +18,15 @@ class UserTier(models.Model):
     restaurant_id = models.ForeignKey('business.Restaurant', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
-    expires_at = models.DateTimeField(null=True)
-    tier_level = models.ForeignKey('business.TierReward', on_delete=models.CASCADE)
+    tier = models.ForeignKey('business.TierReward', null=True, on_delete=models.CASCADE)
+    
+    def has_refreshed(self):
+        if self.tier.refreshes_in is None:
+            return True
+        
+        time_difference = timezone.now() - self.created_at
+        refresh = self.tier.refreshes_in - timezone.now()
+        return time_difference.total_seconds() >= refresh.total_seconds()
 
 class Points(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
