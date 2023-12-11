@@ -9,6 +9,29 @@ from business.models import RegistrationRequests, Restaurant, TierReward
 from jacare.models import CustomerReviews
 # Create your views here.
 
+#Endpoint for updating business profile
+@api_view(["PATCH"])
+@csrf_exempt
+def update_business(request):
+    if request.method == 'PATCH':
+        body = request.data
+        uid = request.headers.get("Authorization", "").split("Bearer ")[-1]
+        user = User.objects.filter(user_uid=uid).first()
+        restaurant_id = body.get("businessId", None)
+        if user:
+            try:
+                restaurant = Restaurant.objects.get(id=restaurant_id, owner_user_id=user)
+                restaurant.email = body.get("email", restaurant.email)
+                restaurant.phone_number = body.get("phoneNumber", restaurant.phone_number)
+                restaurant.contact_person = body.get("contactPerson", restaurant.contact_person)
+                restaurant.save()
+                return JsonResponse({'message': 'updated'}, status=200)
+            except Restaurant.DoesNotExist:
+                return JsonResponse({"error": "could not find restaurant"}, status=404)
+        else:
+            return JsonResponse({"error" : "Could not find user"}, status=404)
+            
+
 #Endpoint for creating a new registration request
 @csrf_exempt 
 @api_view(["POST"])
@@ -51,6 +74,7 @@ def verify_user(request, id):
 @csrf_exempt
 def get_business(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
+    # uid = request.headers.get("uid", None)
     user = User.objects.filter(user_uid=uid).first()
     restaurant_data = Restaurant.objects.filter(owner_user_id=user).all()
     if restaurant_data:
@@ -60,11 +84,12 @@ def get_business(request):
             rewards = TierReward.objects.filter(restaurant_id=restaurant["id"]).all()
             if reviews:
                 restaurant["reviews"] = list(reviews.values())
-                
             else:
-                restaurant["review"] = "No reviews found"
+                restaurant["reviews"] = "No reviews found"
             if rewards:
                 restaurant["rewards"] = list(rewards.values())
+                for reward in restaurant["rewards"]:
+                    print(reward["refresh"])
             else: 
                 restaurant["rewards"] = "No rewards found"
 
@@ -157,8 +182,7 @@ def new_tier_level(request):
         reward_description = body.get("description", None)
         points_required = body.get("points", None)
         refresh_in_days = body.get("refresh", None)
-        refresh_date = timezone.now() + timedelta(days=refresh_in_days)
-        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant, refreshes_in=refresh_date)
+        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant, refresh=refresh_in_days)
         tier.save()
         return JsonResponse({"success": "tier created"}, status=201)
     else: 
@@ -175,9 +199,7 @@ def edit_tier(request, id):
             tier.reward_level = body.get("tier", tier.reward_level)
             tier.reward_description = body.get("description", tier.reward_description)
             tier.points_required = body.get("cost", tier.points_required)
-            refresh_in_days = body.get("refresh", tier.refreshes_in)
-            refresh_date = timezone.now() + timedelta(days=refresh_in_days)
-            tier.refreshes_in = refresh_date
+            tier.refresh = body.get("refresh", tier.refresh)
             tier.save()
         return JsonResponse({'success': 'tier edited'}, status=200, safe=False)
     else:
