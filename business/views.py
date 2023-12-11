@@ -89,7 +89,7 @@ def get_business(request):
             if rewards:
                 restaurant["rewards"] = list(rewards.values())
                 for reward in restaurant["rewards"]:
-                    print(reward["refreshes_in"])
+                    print(reward["refresh"])
             else: 
                 restaurant["rewards"] = "No rewards found"
 
@@ -182,8 +182,7 @@ def new_tier_level(request):
         reward_description = body.get("description", None)
         points_required = body.get("points", None)
         refresh_in_days = body.get("refresh", None)
-        refresh_date = timezone.now() + timedelta(days=refresh_in_days)
-        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant, refreshes_in=refresh_date)
+        tier = TierReward(reward_level=reward_level, reward_description=reward_description, points_required=points_required, restaurant_id=restaurant, refresh=refresh_in_days)
         tier.save()
         return JsonResponse({"success": "tier created"}, status=201)
     else: 
@@ -200,9 +199,8 @@ def edit_tier(request, id):
             tier.reward_level = body.get("tier", tier.reward_level)
             tier.reward_description = body.get("description", tier.reward_description)
             tier.points_required = body.get("cost", tier.points_required)
-            refresh_in_days = body.get("refresh", tier.refreshes_in)
-            refresh_date = timezone.now() + timedelta(days=refresh_in_days)
-            tier.refreshes_in = refresh_date
+            refresh_in_days = body.get("refresh", tier.refresh)
+            tier.refresh = refresh_in_days
             tier.save()
         return JsonResponse({'success': 'tier edited'}, status=200, safe=False)
     else:

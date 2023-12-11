@@ -22,7 +22,7 @@ class TierReward(models.Model):
     reward_level = models.CharField()
     reward_description = models.TextField()
     points_required = models.IntegerField()
-    refreshes_in = models.DateTimeField(null=True)
+    refresh = models.IntegerField(null=True)
 
 class RegistrationRequests(models.Model):
     class Meta:
