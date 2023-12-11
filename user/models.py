@@ -21,12 +21,12 @@ class UserTier(models.Model):
     tier = models.ForeignKey('business.TierReward', null=True, on_delete=models.CASCADE)
     
     def has_refreshed(self):
-        if self.tier.refreshes_in is None:
+        if self.tier.refresh is None:
             return True
         
         time_difference = timezone.now() - self.created_at
-        refresh = self.tier.refreshes_in - timezone.now()
-        return time_difference.total_seconds() >= refresh.total_seconds()
+        days_surpassed = time_difference.days
+        return days_surpassed >= self.tier.refresh
 
 class Points(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
