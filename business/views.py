@@ -17,7 +17,7 @@ def update_business(request):
         body = request.data
         uid = request.headers.get("Authorization", "").split("Bearer ")[-1]
         user = User.objects.filter(user_uid=uid).first()
-        restaurant_id = body.get("id", None)
+        restaurant_id = body.get("businessId", None)
         if user:
             try:
                 restaurant = Restaurant.objects.get(id=restaurant_id, owner_user_id=user)
@@ -29,7 +29,7 @@ def update_business(request):
             except Restaurant.DoesNotExist:
                 return JsonResponse({"error": "could not find restaurant"}, status=404)
         else:
-            return JsonResponse({"message" : "Could not find user"}, status=404)
+            return JsonResponse({"error" : "Could not find user"}, status=404)
             
 
 #Endpoint for creating a new registration request
@@ -74,6 +74,7 @@ def verify_user(request, id):
 @csrf_exempt
 def get_business(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
+    # uid = request.headers.get("uid", None)
     user = User.objects.filter(user_uid=uid).first()
     restaurant_data = Restaurant.objects.filter(owner_user_id=user).all()
     if restaurant_data:
@@ -87,7 +88,8 @@ def get_business(request):
                 restaurant["review"] = "No reviews found"
             if rewards:
                 restaurant["rewards"] = list(rewards.values())
-
+                for reward in restaurant["rewards"]:
+                    print(reward["refreshes_in"])
             else: 
                 restaurant["rewards"] = "No rewards found"
 
