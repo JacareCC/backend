@@ -9,6 +9,29 @@ from business.models import RegistrationRequests, Restaurant, TierReward
 from jacare.models import CustomerReviews
 # Create your views here.
 
+#Endpoint for updating business profile
+@api_view(["PATCH"])
+@csrf_exempt
+def update_business(request):
+    if request.method == 'PATCH':
+        body = request.data
+        uid = request.headers.get("Authorization", "").split("Bearer ")[-1]
+        user = User.objects.filter(user_uid=uid).first()
+        restaurant_id = body.get("id", None)
+        if user:
+            try:
+                restaurant = Restaurant.objects.get(id=restaurant_id, owner_user_id=user)
+                restaurant.email = body.get("email", restaurant.email)
+                restaurant.phone_number = body.get("phoneNumber", restaurant.phone_number)
+                restaurant.contact_person = body.get("contactPerson", restaurant.contact_person)
+                restaurant.save()
+                return JsonResponse({'message': 'updated'}, status=200)
+            except Restaurant.DoesNotExist:
+                return JsonResponse({"error": "could not find restaurant"}, status=404)
+        else:
+            return JsonResponse({"message" : "Could not find user"}, status=404)
+            
+
 #Endpoint for creating a new registration request
 @csrf_exempt 
 @api_view(["POST"])
@@ -59,12 +82,12 @@ def get_business(request):
             reviews = CustomerReviews.objects.filter(restaurant_id=restaurant["id"]).all()
             rewards = TierReward.objects.filter(restaurant_id=restaurant["id"]).all()
             if reviews:
-                restaurant["reviews"] = list(reviews.values())
-                
+                restaurant["review"] = list(reviews.values())
             else:
                 restaurant["review"] = "No reviews found"
             if rewards:
                 restaurant["rewards"] = list(rewards.values())
+
             else: 
                 restaurant["rewards"] = "No rewards found"
 
