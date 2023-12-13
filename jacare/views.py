@@ -20,24 +20,28 @@ def login_user(request):
     user = User.objects.filter(user_uid=uid).exists()
     
     if user:
-        return JsonResponse({"success": "Logged in"}, status=200)
+        return HttpResponse("Login successful", status=200)
     else: 
-        return JsonResponse({"Error": "Please register before logging in"}, status=401)
+        return HttpResponse("Authentication required", status=401)
     
 
 #Endpoint for registering users 
 @api_view(['POST'])
 @csrf_exempt
 def register_user(request):
-    body_unicode = request.body.decode('utf-8')
-    body = json.loads(body_unicode)
-    uid = body["uid"]
-    email = body["email"]
-
+    body = request.data
+    uid = body.get("uid", None)
+    email = body.get("email", None) 
+        
     user_exists = User.objects.filter(user_uid=uid).exists()
+    email_exists = User.objects.filter(email=email).exists()
 
+    if not uid:
+        return JsonResponse({"error": "No uid found"}, status=400)
     if user_exists:
         return JsonResponse({"error": "User already registered"}, status=400)
+    if email_exists:
+        return JsonResponse({"error": "Email already registered"}, status=400)
     else:
         new_user = User(user_uid=uid, email=email)
         new_user.save()
@@ -57,43 +61,7 @@ def format_data(restaurant_list, user):
             tier_array = list(tier_data.values())
             restaurant["tiers"] = tier_array 
             new_history = VisitedHistory(restaurant_id=existing_restaurant, user_id=user)
-            new_history.save()  
-            restaurant_review_data = CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all()
-            restaurant_review_list = list(restaurant_review_data.values())
-            if restaurant_review_list:
-                accessibility = 0
-                customer_service = 0
-                value_for_price = 0
-                atmosphere = 0
-                food_quality = 0
-                for review in restaurant_review_list:
-                    review.accessibility += accessibility
-                    review.customer_service += customer_service
-                    review.value_for_price += value_for_price
-                    review.atmosphere += atmosphere
-                    review.food_quality += food_quality
-                num_reviews = len(restaurant_review_list)
-                accessibility /= num_reviews
-                customer_service /= num_reviews
-                value_for_price /= num_reviews
-                atmosphere /= num_reviews
-                food_quality /= num_reviews
-                accessibility_percentage = (accessibility / 5) * 100
-                customer_service_percentage = (customer_service / 5) * 100
-                value_for_price_percentage = (value_for_price / 5) * 100
-                atmosphere_percentage = (atmosphere / 5) * 100
-                food_quality_percentage = (food_quality / 5) * 100
-                restaurant["accessibility"] = accessibility_percentage
-                restaurant["customer_service"] = customer_service_percentage
-                restaurant["value_for_price"] = value_for_price_percentage
-                restaurant["food_quality"] = atmosphere_percentage
-                restaurant["atmosphere"] = food_quality_percentage
-            else:
-                restaurant["accessibility"] = None
-                restaurant["customer_service"] = None
-                restaurant["value_for_price"] = None
-                restaurant["food_quality"] = None
-                restaurant["atmosphere"] = None
+            new_history.save()
         else:
             new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), location=restaurant.get("location", {}),claimed=False)
             new_restaurant.save()
@@ -169,26 +137,50 @@ def weight_data(restaurant_list, max_result_count):
 @api_view(['POST'])
 @csrf_exempt
 def query_restaraurant(request):
-
-    body = request.data
+    body = request.data if request.data else None
+    if not body:
+        return JsonResponse({"error": "Search parameters not found"}, status=400)
+    
     cuisine_options = body.get("cuisineOptions", None)
     location = body.get("location", None)
     price = body.get("price", None)
     distance = body.get("distanceToTravel", 500)
     openNow = body.get("openNow", None)
     max_result_count = body.get("amountOfOptions", None)
-    uid = request.headers.get("Authorization", "").split('Bearer ')[-1] 
+    uid = request.headers.get("Authorization", None).split('Bearer ')[-1] 
+
+    if not uid:
+        return JsonResponse({"error": "uid not found"}, status=400)
+    
     user = User.objects.filter(user_uid=uid).first()
 
-    location_restriction = { 
-            "circle": {
-                "center": {
-                    "latitude": location["latitude"],
-                    "longitude": location["longitude"],
-                },
-            "radius": distance
-        }   
-    }
+    if not cuisine_options:
+        return JsonResponse({"error": "cuisineOptions not found"}, status=400)
+    
+    if type(price) is not int:
+        return JsonResponse({"error": "price not found"}, status=400)
+    
+    if price < 0 or price > 4:
+        return JsonResponse({"error": "price is out of range"}, status=400)
+
+    if not max_result_count:
+        return JsonResponse({"error": "amountOfOptions not found"}, status=400)
+    
+    if location:
+        if type(location["longitude"]) is float and type(location["latitude"]) is float:
+            location_restriction = { 
+                "circle": {
+                    "center": {
+                        "latitude": location["latitude"],
+                        "longitude": location["longitude"],
+                    },
+                "radius": distance
+                }   
+            }
+        else:
+            return JsonResponse({"error": "Invalid location"}, status=400)
+    else:
+        return JsonResponse({"error": "Location not found"}, status=400)
 
     json_data = {
         "includedTypes": cuisine_options,
