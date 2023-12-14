@@ -61,43 +61,7 @@ def format_data(restaurant_list, user):
             tier_array = list(tier_data.values())
             restaurant["tiers"] = tier_array 
             new_history = VisitedHistory(restaurant_id=existing_restaurant, user_id=user)
-            new_history.save()  
-            restaurant_review_data = CustomerReviews.objects.filter(restaurant_id=existing_restaurant).all()
-            restaurant_review_list = list(restaurant_review_data.values())
-            if restaurant_review_list:
-                accessibility = 0
-                customer_service = 0
-                value_for_price = 0
-                atmosphere = 0
-                food_quality = 0
-                for review in restaurant_review_list:
-                    review.accessibility += accessibility
-                    review.customer_service += customer_service
-                    review.value_for_price += value_for_price
-                    review.atmosphere += atmosphere
-                    review.food_quality += food_quality
-                num_reviews = len(restaurant_review_list)
-                accessibility /= num_reviews
-                customer_service /= num_reviews
-                value_for_price /= num_reviews
-                atmosphere /= num_reviews
-                food_quality /= num_reviews
-                accessibility_percentage = (accessibility / 5) * 100
-                customer_service_percentage = (customer_service / 5) * 100
-                value_for_price_percentage = (value_for_price / 5) * 100
-                atmosphere_percentage = (atmosphere / 5) * 100
-                food_quality_percentage = (food_quality / 5) * 100
-                restaurant["accessibility"] = accessibility_percentage
-                restaurant["customer_service"] = customer_service_percentage
-                restaurant["value_for_price"] = value_for_price_percentage
-                restaurant["food_quality"] = atmosphere_percentage
-                restaurant["atmosphere"] = food_quality_percentage
-            else:
-                restaurant["accessibility"] = None
-                restaurant["customer_service"] = None
-                restaurant["value_for_price"] = None
-                restaurant["food_quality"] = None
-                restaurant["atmosphere"] = None
+            new_history.save()
         else:
             new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), location=restaurant.get("location", {}),claimed=False)
             new_restaurant.save()
