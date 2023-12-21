@@ -21,8 +21,10 @@ class TestRegisterEndpoint:
         #user object to be used for test data, and body object to be used for request
         user = user_factory()
         body = {
-            "uid": "test_3",
+            "uid": "test_6",
         }
+
+        print(user.user_uid)
 
         #response from api call to /register/ endpoint  
         response = api_client().post("/register/", content_type='application/json', data=json.dumps(body))

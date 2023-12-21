@@ -18,6 +18,12 @@ class VisitedHistoryFactory(factory.django.DjangoModelFactory):
     user_id = factory.SubFactory(UserFactory)
     restaurant_id = factory.SubFactory("business.tests.factories.RestaurantFactory")
 
+class PointsFactory(factory.django.DjangoModelFactory):
+    class Meta: 
+        model = Points
+    
+    user_id = factory.SubFactory(UserFactory)
+    value = 1
 
 
 
