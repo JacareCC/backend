@@ -11,9 +11,10 @@ class CustomerReviews(models.Model):
     isVerified = models.BooleanField(default=False)
     isHidden = models.BooleanField(default=False)
 
-
-
-
+class CheckinHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    check_in_date = models.DateField(auto_now_add=True)
 
 
 
