@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg
 from rest_framework.decorators import api_view
-from .models import CustomerReviews
+from .models import CustomerReviews, CheckinHistory
 from user.models import User, Points, UserTier, VisitedHistory
 from business.models import Restaurant, TierReward
 import requests
@@ -273,6 +273,24 @@ def purchase_tier(request):
             user_points.value -= cost
             user_points.save()
             return JsonResponse({"success": "purchased new tier"}, status=201)
+
+
+@csrf_exempt
+@api_view(['POST'])
+def check_in(request):
+    body = request.data 
+    user_uid = body.get("uid", None)
+    restaurant_id = body.get("restaurant_id", None)
+    user = User.objects.get(user_uid=user_uid).first()
+    restaurant = Restaurant.objects.get(id=restaurant_id).first()
+    if not user:
+        return JsonResponse({"error": "user not found"}, status=400)
+    if not restaurant:
+        return JsonResponse({"error": "restaurant not found"}, status=400)
+    
+    checkin = CheckinHistory(user=user, restaurant=restaurant)
+    checkin.save()
+    return JsonResponse({"success": "checked in"}, status=201)
 
 
 
