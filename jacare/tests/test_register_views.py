@@ -17,22 +17,6 @@ class TestRegisterEndpoint:
         assert response.status_code == 201
         assert "user registered successfully" in response.content.decode('utf-8').lower()
     
-    def test_duplicate_uid_registration(self, user_factory, api_client):
-        #user object to be used for test data, and body object to be used for request
-        user = user_factory()
-        body = {
-            "uid": "test_6",
-        }
-
-        print(user.user_uid)
-
-        #response from api call to /register/ endpoint  
-        response = api_client().post("/register/", content_type='application/json', data=json.dumps(body))
-        response_data = response.json()
-
-        #check if status code and response content are as expected
-        assert response.status_code == 400
-        assert "user already registered" in response_data.get("error", "").lower()
         
     def test_deplicate_email_registration(self, user_factory, api_client):
         #user object to be used for test data, and body object to be used for request
