@@ -219,6 +219,9 @@ def query_restaraurant(request):
 @csrf_exempt
 def new_review(request):
     body = request.data
+    if not body:
+        return JsonResponse({"error": "no body found"}, status=400)
+    
     restaurant_id = body.get('restaurant_place_id', None)
     user_uid = body.get('user_uid', None)
     user = User.objects.filter(user_uid=user_uid).first()
