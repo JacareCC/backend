@@ -227,20 +227,23 @@ def new_review(request):
     user = User.objects.filter(user_uid=user_uid).first()
     restaurant = Restaurant.objects.filter(id=restaurant_id).first()
 
-    if restaurant and user:
-        new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
-        new_review_made.save()
-        user_points_exists = Points.objects.filter(user_id=user).exists()
-        if user_points_exists:
-            user_points = Points.objects.filter(user_id=user).first()
-            user_points.value += 1
-            user_points.save()
-        else:
-            new_user_points = Points(user_id=user, value=1)
-            new_user_points.save()
-        return HttpResponse("success", status=201)
-    else: 
-        return JsonResponse({"error": "failed to save review"}, status=500)
+    if not user:
+        return JsonResponse({"error": "no user found"}, status=400)
+    
+    if not restaurant:
+        return JsonResponse({"error": "no restaurant found"}, status=400)
+    
+    new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
+    new_review_made.save()
+    user_points_exists = Points.objects.filter(user_id=user).exists()
+    if user_points_exists:
+        user_points = Points.objects.filter(user_id=user).first()
+        user_points.value += 1
+        user_points.save()
+    else:
+        new_user_points = Points(user_id=user, value=1)
+        new_user_points.save()
+    return HttpResponse("success", status=201)
 
 #Endpoint for purchasing tiers with points
 @api_view(["POST"])
