@@ -10,7 +10,7 @@ class Restaurant(models.Model):
     contact_person = models.CharField(max_length=200, null=True)
     retaurant_level = models.IntegerField(null=True)
     address = models.CharField(max_length=200, null=True)
-    claimed = models.BooleanField()
+    claimed = models.BooleanField(default=False)
     qr_code_link = models.CharField(null=True, default=None)
     owner_user_id = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True, blank=True)
     location = models.JSONField(default=dict)

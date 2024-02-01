@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg
 from rest_framework.decorators import api_view
-from .models import CustomerReviews
+from .models import CustomerReviews, CheckinHistory
 from user.models import User, Points, UserTier, VisitedHistory
 from business.models import Restaurant, TierReward
 import requests
@@ -219,25 +219,31 @@ def query_restaraurant(request):
 @csrf_exempt
 def new_review(request):
     body = request.data
+    if not body:
+        return JsonResponse({"error": "no body found"}, status=400)
+    
     restaurant_id = body.get('restaurant_place_id', None)
     user_uid = body.get('user_uid', None)
     user = User.objects.filter(user_uid=user_uid).first()
     restaurant = Restaurant.objects.filter(id=restaurant_id).first()
 
-    if restaurant and user:
-        new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
-        new_review_made.save()
-        user_points_exists = Points.objects.filter(user_id=user).exists()
-        if user_points_exists:
-            user_points = Points.objects.filter(user_id=user).first()
-            user_points.value += 1
-            user_points.save()
-        else:
-            new_user_points = Points(user_id=user, value=1)
-            new_user_points.save()
-        return HttpResponse("success", status=201)
-    else: 
-        return JsonResponse({"error": "failed to save review"}, status=500)
+    if not user:
+        return JsonResponse({"error": "no user found"}, status=400)
+    
+    if not restaurant:
+        return JsonResponse({"error": "no restaurant found"}, status=400)
+    
+    new_review_made = CustomerReviews(user_id=user,restaurant_id=restaurant, data = body)
+    new_review_made.save()
+    user_points_exists = Points.objects.filter(user_id=user).exists()
+    if user_points_exists:
+        user_points = Points.objects.filter(user_id=user).first()
+        user_points.value += 1
+        user_points.save()
+    else:
+        new_user_points = Points(user_id=user, value=1)
+        new_user_points.save()
+    return HttpResponse("success", status=201)
 
 #Endpoint for purchasing tiers with points
 @api_view(["POST"])
@@ -273,6 +279,24 @@ def purchase_tier(request):
             user_points.value -= cost
             user_points.save()
             return JsonResponse({"success": "purchased new tier"}, status=201)
+
+
+@csrf_exempt
+@api_view(['POST'])
+def check_in(request):
+    body = request.data 
+    user_uid = body.get("uid", None)
+    restaurant_id = body.get("restaurant_id", None)
+    user = User.objects.get(user_uid=user_uid).first()
+    restaurant = Restaurant.objects.get(id=restaurant_id).first()
+    if not user:
+        return JsonResponse({"error": "user not found"}, status=400)
+    if not restaurant:
+        return JsonResponse({"error": "restaurant not found"}, status=400)
+    
+    checkin = CheckinHistory(user=user, restaurant=restaurant)
+    checkin.save()
+    return JsonResponse({"success": "checked in"}, status=201)
 
 
 

@@ -74,9 +74,8 @@ def verify_user(request, id):
 @csrf_exempt
 def get_business(request):
     uid = request.headers.get("Authorization", "").split('Bearer ')[-1]
-    # uid = request.headers.get("uid", None)
     user = User.objects.filter(user_uid=uid).first()
-    restaurant_data = Restaurant.objects.filter(owner_user_id=user).all()
+    restaurant_data = Restaurant.objects.filter(owner_user_id=user)
     if restaurant_data:
         restaurant_list = list(restaurant_data.values())
         for restaurant in restaurant_list:
@@ -88,8 +87,6 @@ def get_business(request):
                 restaurant["reviews"] = "No reviews found"
             if rewards:
                 restaurant["rewards"] = list(rewards.values())
-                for reward in restaurant["rewards"]:
-                    print(reward["refresh"])
             else: 
                 restaurant["rewards"] = "No rewards found"
 
