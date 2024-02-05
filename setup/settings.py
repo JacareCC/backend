@@ -31,6 +31,11 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
 ]
 
+CORS_ORIGIN_WHITELIST = (
+'http://localhost:3000',  
+'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
+)
+
 ALLOWED_HOSTS = ['*']
 
 
