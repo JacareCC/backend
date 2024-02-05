@@ -28,7 +28,7 @@ CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://www.jacareview.com/', 
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000'
+    'http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
 ]
 
 ALLOWED_HOSTS = ['*']
