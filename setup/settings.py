@@ -42,6 +42,7 @@ CORS_ORIGIN_WHITELIST = (
 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
 )
 
+CORS_ALLOW_ALL_PATHS = True
 # ALLOWED_HOSTS = ['*']
 
 
