@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from setup.config.firebase_config import firebase_app
 import dj_database_url
 import os
-from corsheaders.defaults import default_headers
 
 #env files initialization
 load_dotenv()
@@ -24,26 +23,15 @@ DEBUG = True
 
 CORS_ALLOW_CREDENTIALS = True
 
-# CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/']
+CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/']
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
+    'http://localhost:3000'
 ]
 
-CORS_ALLOW_HEADERS = default_headers + (
-    "custom-headers",
-   
-)
-
-CORS_ORIGIN_WHITELIST = (
-'http://localhost:3000',  
-'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
-)
-
-CORS_ALLOW_ALL_PATHS = True
-# ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
