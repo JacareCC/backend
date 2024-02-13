@@ -148,11 +148,10 @@ def query_restaraurant(request):
     openNow = body.get("openNow", None)
     max_result_count = body.get("amountOfOptions", None)
     uid = request.headers.get("Authorization", None).split('Bearer ')[-1] 
+    user = None
 
-    if not uid:
-        return JsonResponse({"error": "uid not found"}, status=400)
-    
-    user = User.objects.filter(user_uid=uid).first()
+    if uid:
+        user = User.objects.filter(user_uid=uid).first()
 
     if not cuisine_options:
         return JsonResponse({"error": "cuisineOptions not found"}, status=400)
@@ -208,7 +207,10 @@ def query_restaraurant(request):
           
             
         weighted_results = weight_data(filtered_results, max_result_count)
-        formatted_results = format_data(weighted_results, user)
+        if user:
+            formatted_results = format_data(weighted_results, user)
+        elif not user:
+            formatted_results = weighted_results
         return JsonResponse({"result": formatted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
