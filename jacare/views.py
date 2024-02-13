@@ -71,6 +71,24 @@ def format_data(restaurant_list, user):
             new_history.save()
     return restaurant_list
 
+#This is a helper function to format result data if there is no user
+def format_data_no_user(restaurant_list):
+    for restaurant in restaurant_list:
+        place_id = restaurant.get("id")
+        existing_restaurant = Restaurant.objects.filter(place_id=place_id).first()
+        if existing_restaurant:
+            restaurant["id"] = existing_restaurant.id
+            restaurant["place_id"] = existing_restaurant.place_id
+            tier_data = TierReward.objects.filter(restaurant_id=existing_restaurant).all()
+            tier_array = list(tier_data.values())
+            restaurant["tiers"] = tier_array 
+        else:
+            new_restaurant = Restaurant(place_id=place_id, business_name=restaurant.get("displayName", {}).get("text"), location=restaurant.get("location", {}),claimed=False)
+            new_restaurant.save()
+            restaurant["place_id"] = new_restaurant.place_id
+            restaurant["id"] = new_restaurant.id
+    return restaurant_list
+
 #This is a helper function to filter returned restaraunts from google
 def filter_data(places, user_price, open_now=False):
     google_price_level = {
@@ -210,7 +228,7 @@ def query_restaraurant(request):
         if user:
             formatted_results = format_data(weighted_results, user)
         elif not user:
-            formatted_results = weighted_results
+            formatted_results = format_data_no_user(weighted_results)
         return JsonResponse({"result": formatted_results}, status=200)
     else:
         return JsonResponse({"error": "Failed to fetch data from Google Places API"}, status=response.status_code)
