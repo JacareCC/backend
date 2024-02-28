@@ -16,3 +16,5 @@ urlpatterns = [
     path('tier/edit/<int:id>/', edit_tier),
     path('tier/remove/<int:id>/', delete_tier_level),
 ]
+
+## improve endpoints to be more restful due to body payload. Think about the body payload and what the endpoint is doing

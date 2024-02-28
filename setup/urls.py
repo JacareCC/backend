@@ -13,3 +13,5 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('business/', include('business.urls'))
 ]
+
+## review to add we would use post and to get the review we would have to use get 
