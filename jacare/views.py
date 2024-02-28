@@ -214,6 +214,7 @@ def query_restaraurant(request):
     ## set keys or strings to variables in order to avoid typos. variable names will throw errors but string will not
     ## make as many things into variables to be more readable.
     response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=json_data, headers=headers)
+   
     if response.status_code == 200:
         data = response.json()
         filtered_results = filter_data(data.get('places', []), price, openNow)

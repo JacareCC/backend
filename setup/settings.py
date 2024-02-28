@@ -25,14 +25,14 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_ALL_ORIGINS = False
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/']
+CORS_ORIGIN_WHITELIST = ['http://localhost:3000', 'https://www.jacareview.com', 'https://frontend-dev-ebon.vercel.app']
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
+    'http://localhost:3000', 'https://www.jacareview.com', 'https://frontend-dev-ebon.vercel.app'
 ]
 
 ALLOWED_HOSTS = [
-    'http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
+    'http://localhost:3000', 'https://www.jacareview.com', 'https://frontend-dev-ebon.vercel.app'
 ]
 
 
