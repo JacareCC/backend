@@ -23,15 +23,17 @@ DEBUG = True
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/']
+CORS_ALLOW_ALL_ORIGINS = False
 
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/']
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000'
+    'http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
 ]
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'http://localhost:3000', 'https://www.jacareview.com/', 'https://frontend-dev-ebon.vercel.app/'
+]
 
 
 # Application definition

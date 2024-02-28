@@ -211,7 +211,8 @@ def query_restaraurant(request):
         "X-Goog-FieldMask":"places.location,places.displayName,places.priceLevel,places.currentOpeningHours,places.id"
     }
 
-
+    ## set keys or strings to variables in order to avoid typos. variable names will throw errors but string will not
+    ## make as many things into variables to be more readable.
     response = requests.post("https://places.googleapis.com/v1/places:searchNearby", json=json_data, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -235,6 +236,7 @@ def query_restaraurant(request):
 
 
 #Endpoint for creating new review
+#Error handling might only be necessary on the frontend unless there is a specific use case
 @api_view(["POST"])
 @csrf_exempt
 def new_review(request):
